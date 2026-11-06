@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucarne — le quiz foot de la semaine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pitch:#0f3d26; --pitch2:#124a2e; --line:rgba(255,255,255,.14);
+  --chalk:#f5f2e8; --ink:#0b1f14; --muted:#9fb8a8;
+  --yellow:#ffd23f; --red:#ef4b4b; --good:#3ddc84;
+  --card:rgba(6,26,16,.72);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:"Bricolage Grotesque",system-ui,sans-serif;color:var(--chalk);
+  background:repeating-linear-gradient(180deg,var(--pitch) 0 64px,var(--pitch2) 64px 128px);
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:560px;margin:0 auto;padding:20px 16px 48px}
+h1,.display{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.02em;text-transform:uppercase}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+.logo{font-size:44px;line-height:.9}
+.logo span{color:var(--yellow)}
+.sub{color:var(--muted);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;backdrop-filter:blur(4px)}
+.me{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.me .pts{font-family:Anton,sans-serif;font-size:40px;line-height:1;color:var(--yellow)}
+.me .lbl{font-size:13px;color:var(--muted)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:16px}
+.day{border:1px solid var(--line);border-radius:12px;padding:8px 2px;text-align:center;font-size:12px;background:rgba(255,255,255,.03);color:var(--muted);cursor:default;font-family:inherit}
+.day b{display:block;font-size:17px;color:var(--chalk);font-weight:800}
+.day .s{display:block;margin-top:3px;font-size:11px;font-weight:600}
+.day.done{background:rgba(255,210,63,.12);border-color:rgba(255,210,63,.5);cursor:pointer}
+.day.done .s{color:var(--yellow)}
+.day.open{border-color:var(--chalk);cursor:pointer;color:var(--chalk)}
+.day.open .s{color:var(--good)}
+.day.today{outline:2px solid var(--yellow);outline-offset:1px}
+.day.locked{opacity:.4}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:16px;font:800 17px "Bricolage Grotesque",sans-serif;cursor:pointer;background:var(--yellow);color:var(--ink);transition:transform .1s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--chalk);border:1px solid var(--line)}
+.btn[disabled]{opacity:.5;cursor:default}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{flex:1;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:8px;font:600 14px inherit;font-family:inherit;cursor:pointer}
+.tab.on{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}
+h2{font-family:Anton,sans-serif;font-weight:400;text-transform:uppercase;font-size:22px;letter-spacing:.03em;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.rk{width:28px;font-family:Anton,sans-serif;font-size:20px;text-align:center;color:var(--muted)}
+.row.r1 .rk{color:var(--yellow)}
+.row .nm{flex:1;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.row .sc{font-family:Anton,sans-serif;font-size:20px}
+.row.mine{background:rgba(255,210,63,.08);border-radius:10px}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+.note{font-size:13px;color:var(--muted);line-height:1.45}
+.warn{background:rgba(239,75,75,.14);border:1px solid rgba(239,75,75,.5);color:#ffd9d9;border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:14px}
+input.txt{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--chalk);font:600 18px inherit;font-family:inherit;margin:12px 0}
+input.txt:focus{outline:2px solid var(--yellow)}
+/* quiz */
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;color:var(--muted)}
+.qhead .score{font-family:Anton,sans-serif;font-size:22px;color:var(--yellow)}
+.dots{display:flex;gap:4px;margin-bottom:14px}
+.dots i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.dots i.ok{background:var(--good)} .dots i.ko{background:var(--red)} .dots i.cur{background:var(--chalk)}
+.timer{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:16px}
+.timer div{height:100%;background:var(--yellow);width:100%;transform-origin:left}
+.cat{display:inline-block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);background:var(--chalk);border-radius:6px;padding:3px 8px;margin-bottom:10px}
+.q{font-size:22px;font-weight:800;line-height:1.25;margin-bottom:18px}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--chalk);border-radius:14px;padding:15px 16px;font:600 17px inherit;font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.opt:hover:not([disabled]){border-color:var(--chalk)}
+.opt.ok{background:rgba(61,220,132,.22);border-color:var(--good)}
+.opt.ko{background:rgba(239,75,75,.22);border-color:var(--red)}
+.opt[disabled]{cursor:default}
+.flash{text-align:center;font-family:Anton,sans-serif;font-size:26px;margin-top:16px;min-height:34px;text-transform:uppercase}
+.big{font-family:Anton,sans-serif;font-size:72px;line-height:1;color:var(--yellow);text-align:center}
+.center{text-align:center}
+.recap .it{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.recap .it:last-child{border-bottom:0}
+.recap .it b{display:block;margin-bottom:3px;font-size:15px}
+.recap .good{color:var(--good)} .recap .bad{color:#ff9a9a}
+.gap{height:10px}
+.palm .row .sc{font-size:16px;color:var(--yellow)}
+@media (max-width:380px){.logo{font-size:38px}.q{font-size:20px}}
+
+/* v2 */
+.today-card{border-color:rgba(255,210,63,.45)}
+.tlabel{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--yellow);margin-bottom:8px}
+.tgame{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.temo{font-size:44px;line-height:1}
+.tname{font-size:30px;line-height:1;margin-bottom:4px}
+.day i{display:block;font-style:normal;font-size:18px;margin:2px 0}
+.prog{display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.prog b{width:36px;color:var(--muted);font-weight:600}
+.club{display:flex;flex-direction:column;align-items:center;gap:4px;width:72px;text-align:center}
+.club span{font-size:11px;font-weight:600;line-height:1.15;color:var(--chalk)}
+.club.hidden .qmark{width:52px;height:54px;border:2px dashed var(--line);border-radius:10px 10px 26px 26px;display:flex;align-items:center;justify-content:center;font-family:Anton,sans-serif;font-size:24px;color:var(--muted)}
+.path{display:flex;flex-wrap:wrap;align-items:center;gap:6px 2px}
+.arrow{color:var(--muted);font-size:20px;margin-top:-16px}
+.ac{position:relative}
+.ac .txt{margin:0 0 10px}
+.sugg{display:none;position:absolute;left:0;right:0;top:54px;background:#f5f2e8;color:var(--ink);border-radius:12px;overflow:hidden;z-index:5;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.sg{padding:12px 14px;font-weight:600;cursor:pointer;border-bottom:1px solid rgba(0,0,0,.08)}
+.sg.on,.sg:hover{background:var(--yellow)}
+.row2{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px}
+.row2 .btn{flex:1;padding:12px;font-size:15px}
+.btn.small{flex:0 0 auto!important;width:auto;padding:10px 14px!important;font-size:14px!important}
+.wrong{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.wrong span{font-size:13px;background:rgba(239,75,75,.15);color:#ffb3b3;border-radius:8px;padding:4px 8px}
+.flash .good,.recap .good{color:var(--good)} .flash .bad,.recap .bad{color:#ff9a9a}
+.flash{font-size:20px}
+.reveal{text-align:center;padding:6px 0 14px;line-height:1.5}
+.reveal.ok .display{color:var(--good)} .reveal.ko .display{color:var(--red)}
+.mhead,.mrow{display:grid;grid-template-columns:1.3fr .9fr .8fr .7fr 1.1fr;gap:4px;align-items:stretch}
+.mhead span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 2px 6px}
+.mrow{margin-bottom:5px}
+.mname{font-weight:700;font-size:13px;display:flex;align-items:center;line-height:1.15}
+.cell{border-radius:8px;padding:6px 3px;font-size:12px;font-weight:700;text-align:center;display:flex;flex-direction:column;justify-content:center;line-height:1.15;background:rgba(255,255,255,.08)}
+.cell small{font-weight:400;font-size:10px;opacity:.85}
+.cell.ok{background:#1f9d55} .cell.near{background:#c99a06;color:#1a1300} .cell.no{background:rgba(255,255,255,.08)}
+.sg small{opacity:.8}
+.tlist{display:grid;gap:6px}
+.titem{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);font-weight:700}
+.titem .tl{min-width:96px;font-size:12px;font-weight:600;color:var(--muted)}
+.titem.f{background:rgba(61,220,132,.18)} .titem.miss{background:rgba(239,75,75,.12);color:#ffb3b3}
+.pitch{position:relative;aspect-ratio:3/4;border:2px solid rgba(255,255,255,.5);border-radius:10px;background:repeating-linear-gradient(180deg,#17663d 0 10%,#145a36 10% 20%);overflow:hidden}
+.pitch .pl{position:absolute;border:2px solid rgba(255,255,255,.45)}
+.pitch .c{left:-2px;right:-2px;top:50%;height:0;border-width:2px 0 0}
+.pitch .b1{left:22%;right:22%;bottom:-2px;height:16%}
+.pitch .b2{left:22%;right:22%;top:-2px;height:16%}
+.slot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:84px;text-align:center}
+.shirt{width:34px;height:34px;border-radius:50%;background:var(--chalk);color:var(--ink);font-family:Anton,sans-serif;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid #0b1f14}
+.slot span{font-size:12px;font-weight:800;background:rgba(6,26,16,.8);border-radius:6px;padding:2px 6px;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot.f .shirt{background:var(--good)} .slot.miss span{color:#ffb3b3}
+.pm{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:stretch;margin:6px 0 4px}
+.vs{align-self:center;font-family:Anton,sans-serif;color:var(--yellow);font-size:20px}
+.pmcard{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--chalk);border-radius:16px;padding:16px 8px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:150px;justify-content:center}
+.pmcard:hover:not([disabled]){border-color:var(--chalk)}
+.pmname{font-weight:800;font-size:17px;line-height:1.15}
+.pmval{font-size:14px;color:var(--muted)} .pmval b{font-family:Anton,sans-serif;font-size:30px;color:var(--chalk);font-weight:400}
+.pmcard.win{border-color:var(--good);background:rgba(61,220,132,.15)} .pmcard.lose{opacity:.75}
+.pmcard.picked{outline:3px solid var(--yellow);outline-offset:2px}
+.pmcard[disabled]{cursor:default}
+/* v3 */
+.teaser{border-color:rgba(255,255,255,.25);background:linear-gradient(160deg,rgba(255,210,63,.12),rgba(6,26,16,.75) 55%)}
+.cdwrap{text-align:center;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.08em}
+.cd{font-family:Anton,sans-serif;font-size:34px;color:var(--yellow);letter-spacing:.02em;text-transform:none;margin-top:4px}
+.done-card .tlabel{margin-bottom:6px}
+.lrow{padding:10px 4px;border-bottom:1px solid var(--line)} .lrow:last-of-type{border-bottom:0}
+.lrow.mine{background:rgba(255,210,63,.08);border-radius:10px}
+.lmain{display:flex;align-items:center;gap:12px}
+.lmain .nm{flex:1;font-weight:700}
+.lmain .sc{font-family:Anton,sans-serif;font-size:22px}
+.lrow:first-child .rk{color:var(--yellow)}
+.ricard{display:inline-block;font-size:12px;font-weight:800;background:#f3d36b;color:#3a2a00;border-radius:999px;padding:2px 8px;margin-left:4px;vertical-align:middle}
+.wks{display:flex;gap:6px;overflow-x:auto;margin:8px 0 0 40px;padding-bottom:2px;scrollbar-width:none}
+.wk{flex:0 0 auto;font-size:12px;color:var(--muted);background:rgba(255,255,255,.06);border-radius:8px;padding:4px 8px;white-space:nowrap}
+.wk b{color:var(--chalk)} .wk.cur{border:1px dashed var(--line)} .wk.lastw{background:rgba(243,211,107,.18);color:#f3d36b}
+.lvl{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;border-radius:6px;padding:3px 8px;background:var(--red);color:#fff}
+.lvl.easy{background:var(--chalk);color:var(--ink)}
+.mbase{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.mbase div{background:rgba(255,210,63,.12);border:1px solid rgba(255,210,63,.4);border-radius:12px;padding:10px 8px;text-align:center}
+.mbase span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+.mbase b{font-size:14px;line-height:1.2}
+.clues{display:grid;gap:6px}
+.clue{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.07);font-size:15px;font-weight:600;line-height:1.3}
+.clue span{flex:0 0 22px;height:22px;border-radius:50%;background:var(--chalk);color:var(--ink);font-family:Anton,sans-serif;font-size:13px;display:flex;align-items:center;justify-content:center}
+.clue.locked{color:var(--muted);font-weight:400;background:rgba(255,255,255,.03);border:1px dashed var(--line)}
+.clue.locked span{background:var(--line);color:var(--muted)}
+.clue.late{opacity:.7}
+.trow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.trow .temo2{font-size:26px;width:34px;text-align:center}
+.trow .nm{flex:1} .trow .nm small{display:block;color:var(--muted);font-size:12px}
+.catch{border-color:rgba(61,220,132,.5)} .catch .tlabel{color:var(--good)}
+.row.lanterne{background:rgba(239,75,75,.14);border-radius:10px}
+.row.lanterne .rk{font-size:20px}
+.row.lanterne small{color:#ffb3b3}
+.ardoise{border-color:rgba(243,211,107,.45)}
+.ardoise .sc{color:#f3d36b}
+.row .nm small{white-space:normal}
+.modal{position:fixed;inset:0;background:rgba(3,14,8,.82);z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;overflow:hidden}
+.mbox{position:relative;max-width:420px;width:100%;background:#0b2a1a;border:2px solid var(--yellow);border-radius:22px;padding:26px 20px 20px;text-align:center;animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.mbadge{width:74px;height:74px;margin:-62px auto 10px;border-radius:50%;background:var(--yellow);color:var(--ink);font-family:Anton,sans-serif;font-size:28px;display:flex;align-items:center;justify-content:center;border:4px solid #0b2a1a}
+.mtxt{margin:12px 0 16px;line-height:1.45}
+.losc{position:relative;background:#1C2A54;border-radius:14px;padding:16px 14px 14px;margin-bottom:16px;overflow:hidden}
+.losc .lbar{position:absolute;left:0;right:0;top:0;height:6px;background:#E2001A}
+.losc p{font-size:13px;color:#cfd6ea}
+.lbig{font-size:24px;line-height:1.1;color:#fff;margin:8px 0}
+.lsmall{font-style:italic}
+.confetti{position:absolute;inset:0;pointer-events:none}
+.confetti i{position:absolute;top:-10px;width:8px;height:14px;border-radius:2px;animation:fall 2.6s linear infinite;opacity:.9}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const Q = [
+["Coupe du monde","Quel pays a remporté la toute première Coupe du monde, en 1930 ?","Uruguay","Argentine","Brésil","Italie"],
+["Coupe du monde","Quel était le score de la finale France–Brésil en 1998 ?","3-0","2-0","3-1","1-0"],
+["Coupe du monde","Qui a marqué deux buts de la tête en finale du Mondial 1998 ?","Zinédine Zidane","Emmanuel Petit","Thierry Henry","Lilian Thuram"],
+["Coupe du monde","Combien de Coupes du monde le Brésil a-t-il remportées ?","5","4","6","3"],
+["Coupe du monde","Qui est le meilleur buteur de l'histoire de la Coupe du monde (16 buts) ?","Miroslav Klose","Ronaldo","Gerd Müller","Just Fontaine"],
+["Coupe du monde","Just Fontaine a marqué 13 buts lors d'une seule Coupe du monde. Laquelle ?","1958","1954","1962","1966"],
+["Coupe du monde","Qui a remporté la Coupe du monde 2010 ?","Espagne","Pays-Bas","Allemagne","Brésil"],
+["Coupe du monde","Qui a marqué le but décisif de la finale du Mondial 2010 ?","Andrés Iniesta","David Villa","Fernando Torres","Xavi"],
+["Coupe du monde","Score de la demi-finale Brésil–Allemagne au Mondial 2014 ?","1-7","0-5","1-6","1-4"],
+["Coupe du monde","Qui a marqué le but de la victoire en finale du Mondial 2014 ?","Mario Götze","Thomas Müller","Miroslav Klose","André Schürrle"],
+["Coupe du monde","Score de la finale France–Croatie en 2018 ?","4-2","2-1","3-1","4-1"],
+["Coupe du monde","Qui a reçu le Ballon d'or du meilleur joueur du Mondial 2018 ?","Luka Modrić","Antoine Griezmann","Kylian Mbappé","Eden Hazard"],
+["Coupe du monde","Quel était le score de la finale Argentine–France 2022 après prolongation ?","3-3","2-2","3-2","4-4"],
+["Coupe du monde","La première Coupe du monde organisée en Asie (2002) l'a été par la Corée du Sud et…","le Japon","la Chine","la Thaïlande","l'Inde"],
+["Coupe du monde","Lors de quelle finale Zidane a-t-il donné un coup de tête à Materazzi ?","2006","2002","2010","2004"],
+["Coupe du monde","La « Main de Dieu » de Maradona, en 1986, c'était contre…","l'Angleterre","l'Allemagne de l'Ouest","la Belgique","l'Italie"],
+["Coupe du monde","Quel Français a été champion du monde comme joueur ET comme sélectionneur ?","Didier Deschamps","Laurent Blanc","Zinédine Zidane","Aimé Jacquet"],
+["Coupe du monde","Qui était le sélectionneur de la France championne du monde en 1998 ?","Aimé Jacquet","Roger Lemerre","Michel Hidalgo","Gérard Houllier"],
+["Coupe du monde","Combien de Coupes du monde Pelé a-t-il gagnées ?","3","2","4","1"],
+["Coupe du monde","Quel pays a accueilli la première Coupe du monde sur le sol africain ?","Afrique du Sud","Maroc","Égypte","Nigeria"],
+["Coupe du monde","Combien d'équipes participent à la phase finale du Mondial 2026 ?","48","32","40","64"],
+["Coupe du monde","Quel pays a remporté la Coupe du monde 1966, à domicile ?","Angleterre","Allemagne de l'Ouest","Portugal","Brésil"],
+["Coupe du monde","En 2022, quel pays est devenu le premier pays africain demi-finaliste d'un Mondial ?","Maroc","Sénégal","Cameroun","Ghana"],
+["Coupe du monde","À Séville en 1982, quel gardien allemand percute violemment Patrick Battiston ?","Harald Schumacher","Sepp Maier","Oliver Kahn","Bodo Illgner"],
+["Coupe du monde","Qui a été le meilleur buteur de l'Italie championne du monde en 1982 ?","Paolo Rossi","Roberto Baggio","Dino Zoff","Salvatore Schillaci"],
+["Coupe du monde","Contre qui Roberto Baggio rate-t-il son tir au but en finale de 1994 ?","Brésil","Argentine","Allemagne","Suède"],
+["Coupe du monde","Combien de buts Kylian Mbappé a-t-il marqués au total en finales de Coupe du monde (2018 + 2022) ?","4","3","5","2"],
+["Coupe du monde","Combien de buts Ronaldo (le Brésilien) a-t-il marqués en finale du Mondial 2002 ?","2","1","3","0"],
+["Coupe du monde","Qui a marqué le but en or contre le Paraguay en huitièmes du Mondial 1998 ?","Laurent Blanc","David Trezeguet","Thierry Henry","Youri Djorkaeff"],
+["Coupe du monde","Contre quelle équipe Lilian Thuram a-t-il marqué ses deux seuls buts en Bleu ?","Croatie","Italie","Paraguay","Danemark"],
+["Coupe du monde","Qui était le capitaine de l'équipe de France en 1998 ?","Didier Deschamps","Zinédine Zidane","Laurent Blanc","Marcel Desailly"],
+["Coupe du monde","Depuis quelle Coupe du monde l'arbitrage vidéo (VAR) est-il utilisé ?","2018","2014","2022","2010"],
+["Coupe du monde","Les cartons jaunes et rouges apparaissent en Coupe du monde en…","1970","1966","1974","1982"],
+["Coupe du monde","En 2002, qui marque le but de la victoire du Sénégal contre la France (1-0) ?","Papa Bouba Diop","El-Hadji Diouf","Henri Camara","Khalilou Fadiga"],
+["Coupe du monde","Quels pays organisent la Coupe du monde 2026 ?","États-Unis, Canada et Mexique","États-Unis seuls","États-Unis et Mexique","États-Unis et Canada"],
+["Euro","Avec combien de buts Michel Platini a-t-il marqué l'Euro 1984 ?","9","7","5","11"],
+["Euro","Qui a marqué le but en or de la finale de l'Euro 2000 ?","David Trezeguet","Sylvain Wiltord","Thierry Henry","Robert Pirès"],
+["Euro","Quel pays a créé la surprise en remportant l'Euro 2004 ?","Grèce","Portugal","Tchéquie","Danemark"],
+["Euro","Qui a marqué le but de la victoire du Portugal en finale de l'Euro 2016 ?","Éder","Cristiano Ronaldo","Nani","Ricardo Quaresma"],
+["Euro","Qui a remporté l'Euro 2020 (joué en 2021) ?","Italie","Angleterre","Espagne","Belgique"],
+["Euro","Qui a remporté l'Euro 2024 ?","Espagne","Angleterre","France","Allemagne"],
+["Euro","Pourquoi le Danemark, vainqueur de l'Euro 1992, était-il un invité surprise ?","Il remplaçait la Yougoslavie exclue","Il était pays organisateur","Il avait gagné un barrage tardif","Il remplaçait l'URSS dissoute"],
+["Euro","Combien d'Euros l'Espagne a-t-elle remportés ?","4","3","2","5"],
+["Euro","Antonín Panenka a inventé sa célèbre « panenka » en finale de l'Euro 1976. Pour quel pays jouait-il ?","Tchécoslovaquie","Pologne","Hongrie","Yougoslavie"],
+["Euro","Quel âge avait Lamine Yamal lors de son but contre la France à l'Euro 2024 ?","16 ans","17 ans","18 ans","15 ans"],
+["Euro","Quelle sélection a éliminé l'Angleterre en huitièmes de l'Euro 2016 ?","Islande","Pays de Galles","Hongrie","Irlande du Nord"],
+["Euro","Quel pays organisait l'Euro 2024 ?","Allemagne","France","Angleterre","Italie"],
+["Ligue des champions","Quel club détient le record de victoires en Ligue des champions ?","Real Madrid","Milan AC","Bayern Munich","Liverpool"],
+["Ligue des champions","Quel club français a été le premier à remporter la Ligue des champions, en 1993 ?","Olympique de Marseille","Paris Saint-Germain","AS Monaco","Olympique Lyonnais"],
+["Ligue des champions","Qui a marqué le but de la victoire de l'OM en finale de 1993 ?","Basile Boli","Rudi Völler","Alen Bokšić","Abedi Pelé"],
+["Ligue des champions","Contre quel club l'OM a-t-il gagné la finale de 1993 ?","Milan AC","Juventus","FC Barcelone","Bayern Munich"],
+["Ligue des champions","Quel était le score de la finale PSG–Inter en 2025 ?","5-0","3-0","2-1","4-1"],
+["Ligue des champions","Dans quelle ville le PSG a-t-il remporté sa première Ligue des champions en 2025 ?","Munich","Paris","Londres","Istanbul"],
+["Ligue des champions","En 2005, Liverpool remonte un 0-3 à Istanbul. Contre qui ?","Milan AC","Juventus","Real Madrid","Chelsea"],
+["Ligue des champions","Quelle équipe a subi la « remontada » 6-1 au Camp Nou en 2017 ?","PSG","Arsenal","Juventus","Chelsea"],
+["Ligue des champions","Qui est le meilleur buteur de l'histoire de la Ligue des champions ?","Cristiano Ronaldo","Lionel Messi","Robert Lewandowski","Karim Benzema"],
+["Ligue des champions","Qui entraînait le Real Madrid lors de ses trois C1 consécutives (2016-2018) ?","Zinédine Zidane","Carlo Ancelotti","José Mourinho","Rafael Benítez"],
+["Ligue des champions","Contre quel club Monaco a-t-il perdu la finale de la Ligue des champions 2004 ?","FC Porto","Chelsea","Real Madrid","Liverpool"],
+["Ligue des champions","Qui entraînait le FC Porto vainqueur de la Ligue des champions 2004 ?","José Mourinho","André Villas-Boas","Fernando Santos","Jorge Jesus"],
+["Ligue des champions","En 1999, Manchester United renverse la finale en arrêts de jeu face à…","Bayern Munich","Juventus","Valence","FC Barcelone"],
+["Ligue des champions","Comment s'appelait la Ligue des champions avant 1992 ?","Coupe des clubs champions européens","Coupe UEFA","Coupe des coupes","Coupe Intertoto"],
+["Ligue des champions","Quel club français a perdu les finales de C1 de 1956 et 1959 face au Real Madrid ?","Stade de Reims","AS Saint-Étienne","OGC Nice","Olympique de Marseille"],
+["Ligue des champions","En 1976, contre qui Saint-Étienne perd-il la finale des « poteaux carrés » ?","Bayern Munich","Liverpool","Ajax","Borussia Mönchengladbach"],
+["Ligue des champions","Avec quel club Mourinho réalise-t-il le triplé en 2010 ?","Inter Milan","Chelsea","Real Madrid","FC Porto"],
+["Ligue des champions","Combien de Ligues des champions Lionel Messi a-t-il remportées ?","4","3","5","2"],
+["Ligue des champions","Combien de Ligues des champions Cristiano Ronaldo a-t-il remportées ?","5","4","6","3"],
+["Ligue des champions","Quel club remporte la C1 1995 avec une équipe très jeune et un but de Patrick Kluivert ?","Ajax","PSV Eindhoven","Feyenoord","Milan AC"],
+["Ballon d'or","Quel joueur détient le record de Ballons d'or ?","Lionel Messi","Cristiano Ronaldo","Michel Platini","Johan Cruyff"],
+["Ballon d'or","Combien de Ballons d'or consécutifs Michel Platini a-t-il gagnés ?","3","2","4","1"],
+["Ballon d'or","Qui a remporté le Ballon d'or 2025 ?","Ousmane Dembélé","Lamine Yamal","Vitinha","Mohamed Salah"],
+["Ballon d'or","En quelle année Karim Benzema a-t-il remporté le Ballon d'or ?","2022","2021","2018","2023"],
+["Ballon d'or","Qui a remporté le tout premier Ballon d'or, en 1956 ?","Stanley Matthews","Alfredo Di Stéfano","Raymond Kopa","Ferenc Puskás"],
+["Ballon d'or","En quelle année Raymond Kopa a-t-il remporté le Ballon d'or ?","1958","1956","1960","1962"],
+["Ballon d'or","En quelle année Zinédine Zidane a-t-il remporté le Ballon d'or ?","1998","2000","1996","2002"],
+["Ballon d'or","Quel est le seul gardien de but à avoir remporté le Ballon d'or ?","Lev Yachine","Gianluigi Buffon","Manuel Neuer","Dino Zoff"],
+["Ballon d'or","Dans quel club jouait Rodri lorsqu'il a remporté le Ballon d'or 2024 ?","Manchester City","Real Madrid","Atlético de Madrid","Liverpool"],
+["Ballon d'or","Quel joueur de l'OM a remporté le Ballon d'or en 1991 ?","Jean-Pierre Papin","Chris Waddle","Abedi Pelé","Didier Deschamps"],
+["Ballon d'or","Quel est le seul joueur africain à avoir remporté le Ballon d'or ?","George Weah","Didier Drogba","Samuel Eto'o","Mohamed Salah"],
+["Ligue 1","Quel club est le plus titré de l'histoire du championnat de France ?","Paris Saint-Germain","AS Saint-Étienne","Olympique de Marseille","Olympique Lyonnais"],
+["Ligue 1","Comment surnomme-t-on l'AS Saint-Étienne ?","Les Verts","Les Canaris","Les Sang et Or","Les Aiglons"],
+["Ligue 1","Qui est le meilleur buteur de l'histoire de la Ligue 1 (299 buts) ?","Delio Onnis","Bernard Lacombe","Jean-Pierre Papin","Kylian Mbappé"],
+["Ligue 1","Comment surnomme-t-on le RC Lens ?","Les Sang et Or","Les Dogues","Les Merlus","Les Verts"],
+["Ligue 1","Dans quel stade joue le LOSC Lille ?","Stade Pierre-Mauroy","Stade Bollaert-Delelis","Stade Geoffroy-Guichard","Stade de la Beaujoire"],
+["Ligue 1","Quel club a créé la surprise en devenant champion de France en 2012 ?","Montpellier","Lille","Nice","Rennes"],
+["Ligue 1","Quel club a privé le PSG du titre de champion de France en 2021 ?","Lille","Monaco","Lyon","Marseille"],
+["Ligue 1","Quel club a remporté 7 titres de champion de France consécutifs entre 2002 et 2008 ?","Olympique Lyonnais","Paris Saint-Germain","Girondins de Bordeaux","AS Monaco"],
+["Ligue 1","Comment appelle-t-on le match entre l'OM et l'OL ?","L'Olympico","Le Classique","Le Derby du Rhône","Le Choc des Olympes"],
+["Ligue 1","Quelle affiche surnomme-t-on « Le Classique » ?","PSG – OM","OM – OL","PSG – OL","Lens – Lille"],
+["Ligue 1","Dans quel stade joue le FC Nantes ?","La Beaujoire","La Meinau","Le Roudourou","La Mosson"],
+["Ligue 1","Qui entraînait Bordeaux, champion de France en 2009 ?","Laurent Blanc","Ricardo","Élie Baup","Gernot Rohr"],
+["Ligue 1","Qui entraînait l'OM lors du titre de champion de France 2010 ?","Didier Deschamps","Éric Gerets","Rudi Garcia","José Anigo"],
+["Ligue 1","En 2000, quel club amateur atteint la finale de la Coupe de France ?","Calais","Quevilly","Les Herbiers","Carquefou"],
+["Ligue 1","Qui est le meilleur buteur de l'histoire du PSG ?","Kylian Mbappé","Edinson Cavani","Zlatan Ibrahimović","Pauleta"],
+["Ligue 1","Quelle est la devise de l'Olympique de Marseille ?","Droit au but","Allez l'OM","Toujours plus haut","Ensemble on est plus forts"],
+["Ligue 1","En quelle année l'Olympique de Marseille a-t-il été fondé ?","1899","1905","1920","1892"],
+["Ligue 1","Dans quel stade joue l'AS Saint-Étienne ?","Stade Geoffroy-Guichard","Stade Gerland","Stade Vélodrome","Stade de la Mosson"],
+["Ligue 1","Avec quel club Kylian Mbappé a-t-il été champion de France en 2017 ?","AS Monaco","Paris Saint-Germain","Olympique Lyonnais","OGC Nice"],
+["Légendes","Quel joueur détient le record de sélections en équipe de France (145) ?","Hugo Lloris","Lilian Thuram","Antoine Griezmann","Thierry Henry"],
+["Légendes","Dans quel club Zinédine Zidane a-t-il fait ses débuts professionnels ?","AS Cannes","Olympique de Marseille","Girondins de Bordeaux","AS Monaco"],
+["Légendes","Avec quel club Éric Cantona est-il devenu une légende en Angleterre ?","Manchester United","Chelsea","Liverpool","Arsenal"],
+["Légendes","Avec quel club N'Golo Kanté a-t-il été sacré champion d'Angleterre en 2016 ?","Leicester City","Chelsea","Tottenham","Arsenal"],
+["Légendes","Qui entraînait Leicester, champion d'Angleterre surprise en 2016 ?","Claudio Ranieri","Brendan Rodgers","Nigel Pearson","Roberto Mancini"],
+["Légendes","Dans quelle ville argentine est né Lionel Messi ?","Rosario","Buenos Aires","Córdoba","Mendoza"],
+["Légendes","Sur quelle île est né Cristiano Ronaldo ?","Madère","Les Açores","Majorque","Les Canaries"],
+["Légendes","Dans quel club brésilien Pelé a-t-il passé l'essentiel de sa carrière ?","Santos","Flamengo","Corinthians","São Paulo"],
+["Légendes","Quel numéro de maillot a rendu Johan Cruyff célèbre ?","14","10","9","7"],
+["Légendes","Avec quel club italien Diego Maradona a-t-il remporté deux Scudetti ?","SSC Naples","Juventus","AS Roma","Inter Milan"],
+["Légendes","En 2015, contre qui Robert Lewandowski marque-t-il 5 buts en 9 minutes ?","Wolfsburg","Borussia Dortmund","Schalke 04","Hambourg"],
+["Légendes","Combien de buts Erling Haaland a-t-il marqués lors de sa 1re saison de Premier League (2022-23) ?","36","32","34","28"],
+["Légendes","Quel joueur surnomme-t-on « La Pulga » (la puce) ?","Lionel Messi","Neymar","Sergio Agüero","Andrés Iniesta"],
+["Légendes","Qui surnommait-on « El Fenómeno » ?","Ronaldo","Ronaldinho","Rivaldo","Romário"],
+["Légendes","Quel est le vrai nom de Pelé ?","Edson Arantes do Nascimento","Manoel Francisco dos Santos","Artur Antunes Coimbra","Ronaldo de Assis Moreira"],
+["Légendes","Quel joueur italien surnommait-on « Il Divin Codino » (la divine queue de cheval) ?","Roberto Baggio","Alessandro Del Piero","Francesco Totti","Andrea Pirlo"],
+["Légendes","Paolo Maldini a joué toute sa carrière dans un seul club. Lequel ?","Milan AC","Inter Milan","Juventus","Lazio Rome"],
+["Légendes","Francesco Totti a joué toute sa carrière dans un seul club. Lequel ?","AS Roma","Lazio Rome","Fiorentina","Milan AC"],
+["Légendes","Dans quel club espagnol Antoine Griezmann a-t-il été formé ?","Real Sociedad","Atlético de Madrid","FC Barcelone","Valence"],
+["Légendes","Dans quel club Karim Benzema a-t-il été formé ?","Olympique Lyonnais","AS Saint-Étienne","Olympique de Marseille","AS Monaco"],
+["Légendes","Avec quel club anglais Thierry Henry est-il devenu une légende ?","Arsenal","Chelsea","Manchester United","Liverpool"],
+["Légendes","Quel club Franck Ribéry a-t-il marqué de son empreinte en Allemagne ?","Bayern Munich","Borussia Dortmund","Bayer Leverkusen","Schalke 04"],
+["Légendes","Combien d'années Sir Alex Ferguson a-t-il passées à la tête de Manchester United ?","26","20","23","30"],
+["Légendes","Quel est le meilleur buteur de l'histoire de la Premier League ?","Alan Shearer","Harry Kane","Wayne Rooney","Thierry Henry"],
+["Clubs & stades","Comment s'appelle le stade du FC Barcelone ?","Camp Nou","Mestalla","Santiago-Bernabéu","Vicente-Calderón"],
+["Clubs & stades","Comment s'appelle le stade du Real Madrid ?","Santiago-Bernabéu","Camp Nou","Wanda Metropolitano","La Cartuja"],
+["Clubs & stades","Quel club joue à Old Trafford ?","Manchester United","Manchester City","Liverpool","Arsenal"],
+["Clubs & stades","Quel club joue à Anfield ?","Liverpool","Everton","Manchester United","Chelsea"],
+["Clubs & stades","Quels clubs partagent le stade San Siro ?","Milan AC et Inter Milan","Juventus et Torino","AS Roma et Lazio","Milan AC et Juventus"],
+["Clubs & stades","Quel club joue au Signal Iduna Park ?","Borussia Dortmund","Bayern Munich","Schalke 04","Bayer Leverkusen"],
+["Clubs & stades","En 2017, pour quel joueur le PSG a-t-il payé un transfert record de 222 M€ ?","Neymar","Kylian Mbappé","Philippe Coutinho","Ousmane Dembélé"],
+["Clubs & stades","Lors de quelle saison Arsenal a-t-il été champion sans perdre un match (les « Invincibles ») ?","2003-04","2001-02","1997-98","2005-06"],
+["Clubs & stades","Qui entraînait les « Invincibles » d'Arsenal ?","Arsène Wenger","George Graham","Mikel Arteta","Unai Emery"],
+["Clubs & stades","Quel club italien surnomme-t-on « la Vieille Dame » ?","Juventus","Milan AC","Inter Milan","Torino"],
+["Clubs & stades","Dans quelle ville joue l'Ajax ?","Amsterdam","Rotterdam","Eindhoven","La Haye"],
+["Clubs & stades","Dans quel pays joue Boca Juniors ?","Argentine","Uruguay","Brésil","Chili"],
+["Clubs & stades","Dans quelle ville joue le Benfica ?","Lisbonne","Porto","Braga","Coimbra"],
+["Clubs & stades","Quel club a été champion d'Allemagne sans défaite en 2023-24 ?","Bayer Leverkusen","Bayern Munich","Borussia Dortmund","RB Leipzig"],
+["Clubs & stades","Qui entraînait Leverkusen, champion invaincu en 2023-24 ?","Xabi Alonso","Jürgen Klopp","Julian Nagelsmann","Thomas Tuchel"],
+["Clubs & stades","Quel club est le plus titré de l'histoire de la Serie A ?","Juventus","Milan AC","Inter Milan","AS Roma"],
+["Clubs & stades","Quel club a remporté la Premier League 2024-25 ?","Liverpool","Arsenal","Manchester City","Chelsea"],
+["Clubs & stades","Quel club joue au stade Vélodrome ?","Olympique de Marseille","OGC Nice","Montpellier","Toulouse FC"],
+["Clubs & stades","Quel club joue au Parc des Princes ?","Paris Saint-Germain","Paris FC","Red Star","Stade Français"],
+["Monde","Quelle sélection a remporté le plus de Coupes d'Afrique des nations ?","Égypte","Cameroun","Ghana","Nigeria"],
+["Monde","Quel pays a remporté la CAN 2023, jouée à domicile début 2024 ?","Côte d'Ivoire","Nigeria","Sénégal","Afrique du Sud"],
+["Monde","Quelle sélection a remporté le plus de Copa América ?","Argentine","Uruguay","Brésil","Chili"],
+["Monde","Qui a remporté la Copa América 2024 ?","Argentine","Colombie","Uruguay","Brésil"],
+["Monde","De quel pays Didier Drogba est-il l'icône ?","Côte d'Ivoire","Cameroun","Ghana","Sénégal"],
+["Monde","De quelle nationalité est Zlatan Ibrahimović ?","Suédoise","Bosnienne","Croate","Norvégienne"],
+["Règles","À quelle distance du but se trouve le point de penalty ?","11 mètres","9 mètres","12 mètres","16,5 mètres"],
+["Règles","Quelle est la hauteur réglementaire d'un but ?","2,44 m","2,50 m","2,30 m","2,20 m"],
+["Règles","Quelle est la largeur réglementaire d'un but ?","7,32 m","7,00 m","7,50 m","8,00 m"],
+["Règles","Quel est le rayon du rond central ?","9,15 m","10 m","8,50 m","11 m"],
+["Règles","Combien de remplacements une équipe peut-elle faire en temps réglementaire (hors prolongation) ?","5","3","4","6"],
+["Règles","Combien de temps dure une prolongation complète ?","30 minutes","20 minutes","15 minutes","40 minutes"],
+["Règles","Combien de joueurs au minimum une équipe doit-elle avoir pour qu'un match continue ?","7","8","6","9"]
+];
+
+// ═════════════════════════ DONNÉES DES JEUX ═════════════════════════
+// Nationalités : code → [libellé, drapeau, continent]
+const NAT = {
+  FR:["France","🇫🇷","Europe"], SE:["Suède","🇸🇪","Europe"], CM:["Cameroun","🇨🇲","Afrique"], CI:["Côte d'Ivoire","🇨🇮","Afrique"],
+  BR:["Brésil","🇧🇷","Amérique du Sud"], EN:["Angleterre","🏴󠁧󠁢󠁥󠁮󠁧󠁿","Europe"], IT:["Italie","🇮🇹","Europe"], ES:["Espagne","🇪🇸","Europe"],
+  NL:["Pays-Bas","🇳🇱","Europe"], AR:["Argentine","🇦🇷","Amérique du Sud"], UY:["Uruguay","🇺🇾","Amérique du Sud"], CO:["Colombie","🇨🇴","Amérique du Sud"],
+  UA:["Ukraine","🇺🇦","Europe"], DE:["Allemagne","🇩🇪","Europe"], BE:["Belgique","🇧🇪","Europe"], EG:["Égypte","🇪🇬","Afrique"],
+  SN:["Sénégal","🇸🇳","Afrique"], DZ:["Algérie","🇩🇿","Afrique"], LR:["Liberia","🇱🇷","Afrique"], PT:["Portugal","🇵🇹","Europe"],
+  CZ:["Tchéquie","🇨🇿","Europe"], GA:["Gabon","🇬🇦","Afrique"], GH:["Ghana","🇬🇭","Afrique"], NO:["Norvège","🇳🇴","Europe"],
+  PL:["Pologne","🇵🇱","Europe"], HR:["Croatie","🇭🇷","Europe"], WA:["Pays de Galles","🏴󠁧󠁢󠁷󠁬󠁳󠁿","Europe"], RS:["Serbie","🇷🇸","Europe"], MA:["Maroc","🇲🇦","Afrique"], NG:["Nigeria","🇳🇬","Afrique"], GE:["Géorgie","🇬🇪","Europe"], KR:["Corée du Sud","🇰🇷","Asie"], DK:["Danemark","🇩🇰","Europe"], ML:["Mali","🇲🇱","Afrique"]
+};
+const POS = {G:"Gardien", D:"Défenseur", M:"Milieu", A:"Attaquant"};
+
+// Joueurs : [nom, nationalité, poste, année de naissance, "club;club;…" (clubs pros principaux, dans l'ordre)]
+const P = [
+["Zinédine Zidane","FR","M",1972,"Cannes;Bordeaux;Juventus;Real Madrid"],
+["Thierry Henry","FR","A",1977,"Monaco;Juventus;Arsenal;Barcelone;New York Red Bulls"],
+["David Trezeguet","FR","A",1977,"Platense;Monaco;Juventus;Hércules;Baniyas;River Plate;Newell's Old Boys;Pune City"],
+["Nicolas Anelka","FR","A",1979,"PSG;Arsenal;Real Madrid;PSG;Liverpool;Manchester City;Fenerbahçe;Bolton;Chelsea;Shanghai Shenhua;Juventus;West Brom;Mumbai City"],
+["Zlatan Ibrahimović","SE","A",1981,"Malmö;Ajax;Juventus;Inter;Barcelone;Milan AC;PSG;Manchester United;LA Galaxy;Milan AC"],
+["Samuel Eto'o","CM","A",1981,"Real Madrid;Majorque;Barcelone;Inter;Anji;Chelsea;Everton;Sampdoria;Antalyaspor;Konyaspor;Qatar SC"],
+["Didier Drogba","CI","A",1978,"Le Mans;Guingamp;OM;Chelsea;Shanghai Shenhua;Galatasaray;Chelsea;Montréal Impact;Phoenix Rising"],
+["Franck Ribéry","FR","M",1983,"Boulogne;Alès;Brest;Metz;Galatasaray;OM;Bayern;Fiorentina;Salernitana"],
+["Claude Makélélé","FR","M",1973,"Nantes;OM;Celta Vigo;Real Madrid;Chelsea;PSG"],
+["Patrick Vieira","FR","M",1976,"Cannes;Milan AC;Arsenal;Juventus;Inter;Manchester City"],
+["Robert Pirès","FR","M",1973,"Metz;OM;Arsenal;Villarreal;Aston Villa;FC Goa"],
+["Ronaldo","BR","A",1976,"Cruzeiro;PSV;Barcelone;Inter;Real Madrid;Milan AC;Corinthians"],
+["Ronaldinho","BR","M",1980,"Grêmio;PSG;Barcelone;Milan AC;Flamengo;Atlético Mineiro;Querétaro;Fluminense"],
+["Kaká","BR","M",1982,"São Paulo;Milan AC;Real Madrid;Milan AC;Orlando City"],
+["David Beckham","EN","M",1975,"Manchester United;Real Madrid;LA Galaxy;Milan AC;PSG"],
+["Andrea Pirlo","IT","M",1979,"Brescia;Inter;Reggina;Milan AC;Juventus;New York City"],
+["Fernando Torres","ES","A",1984,"Atlético;Liverpool;Chelsea;Milan AC;Atlético;Sagan Tosu"],
+["Wesley Sneijder","NL","M",1984,"Ajax;Real Madrid;Inter;Galatasaray;Nice;Al-Gharafa"],
+["Arjen Robben","NL","A",1984,"Groningen;PSV;Chelsea;Real Madrid;Bayern;Groningen"],
+["Hatem Ben Arfa","FR","M",1987,"Lyon;OM;Newcastle;Hull;Nice;PSG;Rennes;Valladolid;Bordeaux;Lille"],
+["Gonzalo Higuaín","AR","A",1987,"River Plate;Real Madrid;Naples;Juventus;Milan AC;Chelsea;Inter Miami"],
+["Carlos Tevez","AR","A",1984,"Boca Juniors;Corinthians;West Ham;Manchester United;Manchester City;Juventus;Boca Juniors;Shanghai Shenhua;Boca Juniors"],
+["Edinson Cavani","UY","A",1987,"Danubio;Palerme;Naples;PSG;Manchester United;Valence;Boca Juniors"],
+["Radamel Falcao","CO","A",1986,"River Plate;Porto;Atlético;Monaco;Manchester United;Chelsea;Galatasaray;Rayo Vallecano;Millonarios"],
+["Gianluigi Buffon","IT","G",1978,"Parme;Juventus;PSG;Juventus;Parme"],
+["Clarence Seedorf","NL","M",1976,"Ajax;Sampdoria;Real Madrid;Inter;Milan AC;Botafogo"],
+["Michael Owen","EN","A",1979,"Liverpool;Real Madrid;Newcastle;Manchester United;Stoke"],
+["Karim Benzema","FR","A",1987,"Lyon;Real Madrid;Al-Ittihad"],
+["Antoine Griezmann","FR","A",1991,"Real Sociedad;Atlético;Barcelone;Atlético"],
+["Kylian Mbappé","FR","A",1998,"Monaco;PSG;Real Madrid"],
+["Lionel Messi","AR","A",1987,"Barcelone;PSG;Inter Miami"],
+["Cristiano Ronaldo","PT","A",1985,"Sporting;Manchester United;Real Madrid;Juventus;Manchester United;Al-Nassr"],
+["Neymar","BR","A",1992,"Santos;Barcelone;PSG;Al-Hilal;Santos"],
+["Luis Suárez","UY","A",1987,"Nacional;Groningen;Ajax;Liverpool;Barcelone;Atlético;Nacional;Grêmio;Inter Miami"],
+["Ángel Di María","AR","M",1988,"Rosario Central;Benfica;Real Madrid;Manchester United;PSG;Juventus;Benfica;Rosario Central"],
+["Dimitri Payet","FR","M",1987,"Nantes;Saint-Étienne;Lille;OM;West Ham;OM;Vasco da Gama"],
+["Florian Thauvin","FR","M",1993,"Grenoble;Bastia;OM;Newcastle;OM;Tigres;Udinese;Lens"],
+["Olivier Giroud","FR","A",1986,"Grenoble;Tours;Montpellier;Arsenal;Chelsea;Milan AC;LAFC;Lille"],
+["Steve Mandanda","FR","G",1985,"Le Havre;OM;Crystal Palace;OM;Rennes"],
+["Hugo Lloris","FR","G",1986,"Nice;Lyon;Tottenham;LAFC"],
+["Fabien Barthez","FR","G",1971,"Toulouse;OM;Monaco;Manchester United;OM;Nantes"],
+["Lilian Thuram","FR","D",1972,"Monaco;Parme;Juventus;Barcelone"],
+["Marcel Desailly","FR","D",1968,"Nantes;OM;Milan AC;Chelsea;Al-Gharafa;Qatar SC"],
+["Laurent Blanc","FR","D",1965,"Montpellier;Naples;Nîmes;Saint-Étienne;Auxerre;Barcelone;OM;Inter;Manchester United"],
+["Youri Djorkaeff","FR","M",1968,"Grenoble;Strasbourg;Monaco;PSG;Inter;Kaiserslautern;Bolton;Blackburn;New York MetroStars"],
+["Jean-Pierre Papin","FR","A",1963,"Valenciennes;Club Bruges;OM;Milan AC;Bayern;Bordeaux;Guingamp"],
+["Éric Cantona","FR","A",1966,"Auxerre;Martigues;OM;Bordeaux;Montpellier;Nîmes;Leeds;Manchester United"],
+["Christophe Dugarry","FR","A",1972,"Bordeaux;Milan AC;Barcelone;OM;Bordeaux;Birmingham;Qatar SC"],
+["Bixente Lizarazu","FR","D",1969,"Bordeaux;Athletic Bilbao;Bayern;OM;Bayern"],
+["Sylvain Wiltord","FR","A",1974,"Rennes;Bordeaux;Arsenal;Lyon;Rennes;OM;Metz;Nantes"],
+["Ludovic Giuly","FR","M",1976,"Lyon;Monaco;Barcelone;AS Roma;PSG;Monaco;Lorient"],
+["Samir Nasri","FR","M",1987,"OM;Arsenal;Manchester City;Séville;Antalyaspor;West Ham;Anderlecht"],
+["Paul Pogba","FR","M",1993,"Manchester United;Juventus;Manchester United;Juventus;Monaco"],
+["N'Golo Kanté","FR","M",1991,"Boulogne;Caen;Leicester;Chelsea;Al-Ittihad"],
+["Raphaël Varane","FR","D",1993,"Lens;Real Madrid;Manchester United;Côme"],
+["Andriy Shevchenko","UA","A",1976,"Dynamo Kiev;Milan AC;Chelsea;Milan AC;Dynamo Kiev"],
+["Gerard Piqué","ES","D",1987,"Manchester United;Saragosse;Barcelone"],
+["Xabi Alonso","ES","M",1981,"Real Sociedad;Eibar;Liverpool;Real Madrid;Bayern"],
+["Cesc Fàbregas","ES","M",1987,"Arsenal;Barcelone;Chelsea;Monaco;Côme"],
+["David Villa","ES","A",1981,"Sporting Gijón;Saragosse;Valence;Barcelone;Atlético;New York City;Vissel Kobe"],
+["Mesut Özil","DE","M",1988,"Schalke 04;Werder Brême;Real Madrid;Arsenal;Fenerbahçe;Istanbul Başakşehir"],
+["Miroslav Klose","DE","A",1978,"Kaiserslautern;Werder Brême;Bayern;Lazio"],
+["Romelu Lukaku","BE","A",1993,"Anderlecht;Chelsea;West Brom;Everton;Manchester United;Inter;Chelsea;Inter;AS Roma;Naples"],
+["Eden Hazard","BE","M",1991,"Lille;Chelsea;Real Madrid"],
+["Mohamed Salah","EG","A",1992,"Al-Mokawloon;Bâle;Chelsea;Fiorentina;AS Roma;Liverpool"],
+["Sadio Mané","SN","A",1992,"Metz;Red Bull Salzbourg;Southampton;Liverpool;Bayern;Al-Nassr"],
+["Riyad Mahrez","DZ","M",1991,"Quimper;Le Havre;Leicester;Manchester City;Al-Ahli"],
+["George Weah","LR","A",1966,"Monaco;PSG;Milan AC;Chelsea;Manchester City;OM;Al-Jazira"],
+["Alessandro Del Piero","IT","A",1974,"Padoue;Juventus;Sydney FC;Delhi Dynamos"],
+["Francesco Totti","IT","A",1976,"AS Roma"],
+["Paolo Maldini","IT","D",1968,"Milan AC"],
+["Fabio Cannavaro","IT","D",1973,"Naples;Parme;Inter;Juventus;Real Madrid;Juventus;Al-Ahli Dubaï"],
+["Roberto Baggio","IT","A",1967,"Vicence;Fiorentina;Juventus;Milan AC;Bologne;Inter;Brescia"],
+["Luís Figo","PT","M",1972,"Sporting;Barcelone;Real Madrid;Inter"],
+["Roberto Carlos","BR","D",1973,"Palmeiras;Inter;Real Madrid;Fenerbahçe;Corinthians;Anji"],
+["Cafu","BR","D",1970,"São Paulo;Saragosse;Palmeiras;AS Roma;Milan AC"],
+["Steven Gerrard","EN","M",1980,"Liverpool;LA Galaxy"],
+["Frank Lampard","EN","M",1978,"West Ham;Chelsea;Manchester City;New York City"],
+["Wayne Rooney","EN","A",1985,"Everton;Manchester United;Everton;DC United;Derby County"],
+["Petr Čech","CZ","G",1982,"Chmel Blšany;Sparta Prague;Rennes;Chelsea;Arsenal"],
+["Iker Casillas","ES","G",1981,"Real Madrid;Porto"],
+["Manuel Neuer","DE","G",1986,"Schalke 04;Bayern"],
+["Sergio Ramos","ES","D",1986,"Séville;Real Madrid;PSG;Séville;Monterrey"],
+["Javier Pastore","AR","M",1989,"Huracán;Palerme;PSG;AS Roma;Elche;Qatar SC"],
+["Hernán Crespo","AR","A",1975,"River Plate;Parme;Lazio;Inter;Chelsea;Milan AC;Inter;Genoa;Parme"],
+["Gabriel Batistuta","AR","A",1969,"Newell's Old Boys;River Plate;Boca Juniors;Fiorentina;AS Roma;Inter;Al-Arabi"],
+["Pierre-Emerick Aubameyang","GA","A",1989,"Dijon;Lille;Monaco;Saint-Étienne;Dortmund;Arsenal;Barcelone;Chelsea;OM;Al-Qadsiah;OM"],
+["Mario Balotelli","IT","A",1990,"Inter;Manchester City;Milan AC;Liverpool;Nice;OM;Brescia;Monza;Adana Demirspor;Sion;Genoa"],
+["Yaya Touré","CI","M",1983,"Beveren;Metalurh Donetsk;Olympiakos;Monaco;Barcelone;Manchester City;Olympiakos;Qingdao Huanghai"],
+["Michael Essien","GH","M",1982,"Bastia;Lyon;Chelsea;Real Madrid;Milan AC;Panathinaikos;Persib"],
+["Thiago Silva","BR","D",1984,"Fluminense;Milan AC;PSG;Chelsea;Fluminense"],
+["Marquinhos","BR","D",1994,"Corinthians;AS Roma;PSG"],
+["Ousmane Dembélé","FR","A",1997,"Rennes;Dortmund;Barcelone;PSG"],
+["Lamine Yamal","ES","A",2007,"Barcelone"],
+["Erling Haaland","NO","A",2000,"Bryne;Molde;Red Bull Salzbourg;Dortmund;Manchester City"],
+["Robert Lewandowski","PL","A",1988,"Znicz Pruszków;Lech Poznań;Dortmund;Bayern;Barcelone"],
+["Luka Modrić","HR","M",1985,"Dinamo Zagreb;Tottenham;Real Madrid;Milan AC"],
+["Andrés Iniesta","ES","M",1984,"Barcelone;Vissel Kobe;Emirates Club"],
+["Xavi","ES","M",1980,"Barcelone;Al-Sadd"],
+["Juninho Pernambucano","BR","M",1975,"Sport Recife;Vasco da Gama;Lyon;Al-Gharafa;Vasco da Gama;New York Red Bulls;Vasco da Gama"],
+["Sonny Anderson","BR","A",1970,"Vasco da Gama;Servette;OM;Monaco;Barcelone;Lyon;Villarreal;Al-Rayyan"],
+["Pauleta","PT","A",1973,"Estoril;Salamanque;Deportivo La Corogne;Bordeaux;PSG"],
+["Kevin De Bruyne","BE","M",1991,"Genk;Chelsea;Werder Brême;Wolfsburg;Manchester City;Naples"],
+["Gareth Bale","WA","A",1989,"Southampton;Tottenham;Real Madrid;LAFC"],
+["Harry Kane","EN","A",1993,"Tottenham;Bayern"],
+["Alexandre Lacazette","FR","A",1991,"Lyon;Arsenal;Lyon;Neom"],
+["Wissam Ben Yedder","FR","A",1990,"Toulouse;Séville;Monaco"],
+["Yoann Gourcuff","FR","M",1986,"Rennes;Milan AC;Bordeaux;Lyon;Rennes;Dijon"],
+["Bafétimbi Gomis","FR","A",1985,"Saint-Étienne;Lyon;Swansea;OM;Galatasaray;Al-Hilal;Galatasaray;Kawasaki Frontale"],
+["Pavel Nedvěd","CZ","M",1972,"Dukla Prague;Sparta Prague;Lazio;Juventus"],
+["Emmanuel Petit","FR","M",1970,"Monaco;Arsenal;Barcelone;Chelsea"],
+["Didier Deschamps","FR","M",1968,"Nantes;OM;Bordeaux;OM;Juventus;Chelsea;Valence"],
+["Alessandro Nesta","IT","D",1976,"Lazio;Milan AC;Montréal Impact;Chennaiyin"],
+["Gennaro Gattuso","IT","M",1978,"Perugia;Rangers;Salernitana;Milan AC;Sion"],
+["Dani Alves","BR","D",1983,"Bahia;Séville;Barcelone;Juventus;PSG;São Paulo;Barcelone;Pumas"],
+["Marcelo","BR","D",1988,"Fluminense;Real Madrid;Olympiakos;Fluminense"],
+["Casemiro","BR","M",1992,"São Paulo;Real Madrid;Porto;Real Madrid;Manchester United"],
+["Philippe Coutinho","BR","M",1992,"Vasco da Gama;Inter;Espanyol;Liverpool;Barcelone;Bayern;Aston Villa;Al-Duhail;Vasco da Gama"],
+["Toni Kroos","DE","M",1990,"Bayern;Bayer Leverkusen;Bayern;Real Madrid"],
+["Thomas Müller","DE","A",1989,"Bayern;Vancouver Whitecaps"],
+["Bastian Schweinsteiger","DE","M",1984,"Bayern;Manchester United;Chicago Fire"],
+["Philipp Lahm","DE","D",1983,"Bayern;Stuttgart;Bayern"],
+["Mats Hummels","DE","D",1988,"Bayern;Dortmund;Bayern;Dortmund;AS Roma"],
+["Marco Reus","DE","A",1989,"Rot Weiss Ahlen;Borussia Mönchengladbach;Dortmund;LA Galaxy"],
+["Sergio Agüero","AR","A",1988,"Independiente;Atlético;Manchester City;Barcelone"],
+["Javier Mascherano","AR","M",1984,"River Plate;Corinthians;West Ham;Liverpool;Barcelone;Hebei;Estudiantes"],
+["Juan Román Riquelme","AR","M",1978,"Boca Juniors;Barcelone;Villarreal;Boca Juniors;Argentinos Juniors"],
+["Diego Forlán","UY","A",1979,"Independiente;Manchester United;Villarreal;Atlético;Inter;Internacional;Cerezo Osaka;Peñarol"],
+["Diego Godín","UY","D",1986,"Cerro;Nacional;Villarreal;Atlético;Inter;Cagliari;Atlético Mineiro;Vélez Sarsfield"],
+["Carles Puyol","ES","D",1978,"Barcelone"],
+["Sergio Busquets","ES","M",1988,"Barcelone;Inter Miami"],
+["David Silva","ES","M",1986,"Valence;Eibar;Celta Vigo;Valence;Manchester City;Real Sociedad"],
+["Raúl","ES","A",1977,"Real Madrid;Schalke 04;Al-Sadd;New York Cosmos"],
+["Blaise Matuidi","FR","M",1987,"Troyes;Saint-Étienne;PSG;Juventus;Inter Miami"],
+["Adrien Rabiot","FR","M",1995,"PSG;Juventus;OM;Milan AC"],
+["Jules Koundé","FR","D",1998,"Bordeaux;Séville;Barcelone"],
+["Aurélien Tchouaméni","FR","M",2000,"Bordeaux;Monaco;Real Madrid"],
+["Eduardo Camavinga","FR","M",2002,"Rennes;Real Madrid"],
+["William Saliba","FR","D",2001,"Saint-Étienne;Arsenal;Nice;OM;Arsenal"],
+["Marcus Thuram","FR","A",1997,"Sochaux;Guingamp;Borussia Mönchengladbach;Inter"],
+["Theo Hernandez","FR","D",1997,"Atlético;Alavés;Real Madrid;Real Sociedad;Milan AC;Al-Hilal"],
+["Mike Maignan","FR","G",1995,"PSG;Lille;Milan AC"],
+["Michael Olise","FR","A",2001,"Reading;Crystal Palace;Bayern"],
+["Mason Greenwood","EN","A",2001,"Manchester United;Getafe;OM"],
+["Virgil van Dijk","NL","D",1991,"Groningen;Celtic;Southampton;Liverpool"],
+["Frenkie de Jong","NL","M",1997,"Willem II;Ajax;Barcelone"],
+["Pedri","ES","M",2002,"Las Palmas;Barcelone"],
+["Rodri","ES","M",1996,"Villarreal;Atlético;Manchester City"],
+["Bukayo Saka","EN","A",2001,"Arsenal"],
+["Bruno Fernandes","PT","M",1994,"Novara;Udinese;Sampdoria;Sporting;Manchester United"],
+["Victor Osimhen","NG","A",1998,"Wolfsburg;Charleroi;Lille;Naples;Galatasaray"],
+["Khvicha Kvaratskhelia","GE","A",2001,"Dinamo Tbilissi;Lokomotiv Moscou;Rubin Kazan;Dinamo Batoumi;Naples;PSG"],
+["Son Heung-min","KR","A",1992,"Hambourg;Bayer Leverkusen;Tottenham;LAFC"],
+["Jamal Musiala","DE","M",2003,"Bayern"],
+["Florian Wirtz","DE","M",2003,"Bayer Leverkusen;Liverpool"],
+["Federico Valverde","UY","M",1998,"Peñarol;Real Madrid;Deportivo La Corogne;Real Madrid"],
+["Lautaro Martínez","AR","A",1997,"Racing Club;Inter"],
+["Thibaut Courtois","BE","G",1992,"Genk;Chelsea;Atlético;Chelsea;Real Madrid"],
+["Gianluigi Donnarumma","IT","G",1999,"Milan AC;PSG;Manchester City"],
+["Michel Platini","FR","M",1955,"Nancy;Saint-Étienne;Juventus"],
+["Johan Cruyff","NL","A",1947,"Ajax;Barcelone;Los Angeles Aztecs;Washington Diplomats;Levante;Ajax;Feyenoord"],
+["Marco van Basten","NL","A",1964,"Ajax;Milan AC"],
+["Diego Maradona","AR","M",1960,"Argentinos Juniors;Boca Juniors;Barcelone;Naples;Séville;Newell's Old Boys;Boca Juniors"],
+["Pelé","BR","A",1940,"Santos;New York Cosmos"],
+["Dennis Bergkamp","NL","A",1969,"Ajax;Inter;Arsenal"],
+["Ryan Giggs","WA","M",1973,"Manchester United"],
+["Gianfranco Zola","IT","A",1966,"Nuorese;Torres;Naples;Parme;Chelsea;Cagliari"],
+["Michael Ballack","DE","M",1976,"Chemnitz;Kaiserslautern;Bayer Leverkusen;Bayern;Chelsea;Bayer Leverkusen"],
+["Oliver Kahn","DE","G",1969,"Karlsruhe;Bayern"],
+["Peter Schmeichel","DK","G",1963,"Brøndby;Manchester United;Sporting;Aston Villa;Manchester City"],
+["Frédéric Kanouté","ML","A",1977,"Lyon;West Ham;Tottenham;Séville;Beijing Guoan"],
+["Jay-Jay Okocha","NG","M",1973,"Eintracht Francfort;Fenerbahçe;PSG;Bolton;Qatar SC;Hull"],
+["Éric Abidal","FR","D",1979,"Monaco;Lille;Lyon;Barcelone;Monaco;Olympiakos"]
+];
+
+// Couleurs des écussons : [couleur 1, couleur 2, sigle, motif] — motif : "v" moitié, "s" rayures, "p" plein, "h" horizontal
+const CLUBS = {
+ "OM":["#2FAEE0","#ffffff","OM","h"], "PSG":["#004170","#DA291C","PSG","v"], "Lyon":["#ffffff","#1B3C8C","OL","h"],
+ "Monaco":["#E30613","#ffffff","ASM","d"], "Bordeaux":["#1B2A4A","#ffffff","FCGB","p"], "Saint-Étienne":["#00843D","#ffffff","ASSE","p"],
+ "Nantes":["#FCD405","#008A45","FCN","p"], "Lille":["#D2001F","#1C2A54","LOSC","v"], "Lens":["#FFD700","#E1001A","RCL","v"],
+ "Rennes":["#E2001A","#000000","SRFC","h"], "Nice":["#E2001A","#000000","OGCN","s"], "Montpellier":["#1E3A8A","#F47920","MHSC","h"],
+ "Metz":["#7A1E3A","#ffffff","FCM","p"], "Toulouse":["#5B2A86","#ffffff","TFC","p"], "Auxerre":["#ffffff","#1D4D9E","AJA","v"],
+ "Guingamp":["#E2001A","#000000","EAG","v"], "Strasbourg":["#0068B4","#ffffff","RCSA","p"], "Le Havre":["#1F3D7A","#87CEEB","HAC","v"],
+ "Cannes":["#E2001A","#ffffff","ASC","v"], "Grenoble":["#1E5AA8","#ffffff","GF38","v"], "Bastia":["#004C99","#ffffff","SCB","p"],
+ "Le Mans":["#E2001A","#FCD405","MUC","v"], "Brest":["#E2001A","#ffffff","SB29","p"], "Nîmes":["#E2001A","#ffffff","NO","p"],
+ "Real Madrid":["#ffffff","#FEBE10","RM","p"], "Barcelone":["#A50044","#004D98","FCB","s"], "Atlético":["#CB3524","#ffffff","ATM","s"],
+ "Séville":["#ffffff","#D71920","SFC","p"], "Valence":["#ffffff","#000000","VCF","p"], "Villarreal":["#FFE667","#005187","VIL","p"],
+ "Real Sociedad":["#0067B1","#ffffff","RSO","s"], "Majorque":["#E20613","#000000","RCD","p"],
+ "Juventus":["#000000","#ffffff","JUV","s"], "Milan AC":["#FB090B","#000000","ACM","s"], "Inter":["#0068A8","#000000","INT","s"],
+ "AS Roma":["#8E1F2F","#F0BC42","ASR","p"], "Lazio":["#87D8F7","#ffffff","SSL","p"], "Naples":["#12A0D7","#ffffff","SSCN","p"],
+ "Parme":["#FFD200","#003D8F","PAR","h"], "Fiorentina":["#482E92","#ffffff","ACF","p"], "Sampdoria":["#1B5497","#ffffff","SAMP","h"],
+ "Manchester United":["#DA291C","#FBE122","MUFC","p"], "Manchester City":["#6CABDD","#ffffff","MCFC","p"], "Arsenal":["#EF0107","#ffffff","AFC","v"],
+ "Chelsea":["#034694","#ffffff","CFC","p"], "Liverpool":["#C8102E","#ffffff","LFC","p"], "Tottenham":["#ffffff","#132257","THFC","p"],
+ "Everton":["#003399","#ffffff","EFC","p"], "Newcastle":["#000000","#ffffff","NUFC","s"], "West Ham":["#7A263A","#1BB1E7","WHU","v"],
+ "Leicester":["#003090","#FDBE11","LCFC","p"], "Bayern":["#DC052D","#ffffff","FCB","v"], "Dortmund":["#FDE100","#000000","BVB","p"],
+ "Schalke 04":["#004D9D","#ffffff","S04","p"], "Werder Brême":["#1D9053","#ffffff","SVW","p"], "Ajax":["#ffffff","#D2122E","AFC","v"],
+ "PSV":["#ED1C24","#ffffff","PSV","s"], "Groningen":["#00A651","#ffffff","FCG","v"], "Benfica":["#E2001A","#ffffff","SLB","p"],
+ "Porto":["#00428C","#ffffff","FCP","s"], "Sporting":["#008057","#ffffff","SCP","h"], "Galatasaray":["#A90432","#FDB912","GS","v"],
+ "Fenerbahçe":["#002D72","#FFED00","FB","s"], "River Plate":["#ffffff","#E2001A","CARP","d"], "Boca Juniors":["#103F79","#FCD116","CABJ","h"],
+ "Santos":["#ffffff","#000000","SFC","p"], "LA Galaxy":["#00245D","#FFD200","LAG","p"], "Inter Miami":["#F7B5CD","#231F20","IMI","p"],
+ "Al-Nassr":["#FFDD00","#1C3D8F","NAS","p"], "Al-Hilal":["#1D4A9E","#ffffff","HIL","p"], "Al-Ittihad":["#FFDD00","#000000","ITT","s"],
+ "Corinthians":["#ffffff","#000000","SCCP","p"], "Flamengo":["#C3281E","#000000","CRF","h"], "Fluminense":["#870A28","#00613C","FLU","s"],
+ "São Paulo":["#ffffff","#E2001A","SPFC","h"], "Grêmio":["#0D80BF","#000000","GRE","s"], "Palmeiras":["#006437","#ffffff","PAL","p"],
+ "Vasco da Gama":["#000000","#ffffff","VAS","d"], "Cruzeiro":["#2F529E","#ffffff","CEC","p"], "Dynamo Kiev":["#ffffff","#1A4CA0","DK","p"],
+ "Shanghai Shenhua":["#1A3E8C","#ffffff","SHS","p"], "Atlético Mineiro":["#000000","#ffffff","CAM","s"], "Red Bull Salzbourg":["#ffffff","#D0021B","RBS","p"]
+};
+
+// ── Lundi : Parcours — chaque semaine 3 joueurs « connus » + 2 joueurs « pour les aguerris » ──
+// Connus : clubs pris dans la base P. Aguerris : [nom|alias, nationalité, "clubs"]
+const PARCOURS = [
+ "Nicolas Anelka","Zlatan Ibrahimović","Samuel Eto'o","David Trezeguet","Éric Cantona","Laurent Blanc",
+ "Youri Djorkaeff","George Weah","Ángel Di María","Hernán Crespo","Franck Ribéry","Gonzalo Higuaín",
+ "Carlos Tevez","Pierre-Emerick Aubameyang","Romelu Lukaku","Jean-Pierre Papin","Luis Suárez","Olivier Giroud",
+ "Thierry Henry","Ronaldo","Kaká","David Beckham","Fernando Torres","Wesley Sneijder",
+ "Arjen Robben","Michael Owen","Clarence Seedorf","Hatem Ben Arfa","Dimitri Payet","Edinson Cavani",
+ "Patrick Vieira","Claude Makélélé","Cesc Fàbregas","David Villa","Mesut Özil","Philippe Coutinho"
+];
+const PARCOURS_EXPERT = [
+ ["André-Pierre Gignac|gignac|app","FR","Lorient;Pau;Toulouse;OM;Tigres"],
+ ["Kevin Gameiro|gameiro","FR","Strasbourg;Lorient;PSG;Séville;Atlético;Valence;Strasbourg"],
+ ["Lassana Diarra|diarra|lass","FR","Le Havre;Chelsea;Arsenal;Portsmouth;Real Madrid;Anji;Lokomotiv Moscou;OM;Al-Jazira;PSG"],
+ ["Mathieu Valbuena|valbuena","FR","Libourne;OM;Dynamo Moscou;Lyon;Fenerbahçe;Olympiakos;Apollon Limassol"],
+ ["Yohan Cabaye|cabaye","FR","Lille;Newcastle;PSG;Crystal Palace;Al-Nasr;Saint-Étienne"],
+ ["Morgan Schneiderlin|schneiderlin","FR","Strasbourg;Southampton;Manchester United;Everton;Nice;Western Sydney"],
+ ["Benjamin Mendy|mendy","FR","Le Havre;OM;Monaco;Manchester City;Lorient;FC Zurich"],
+ ["Adil Rami|rami","FR","Lille;Valence;Milan AC;Séville;OM;Fenerbahçe;Sotchi;Boavista;Troyes"],
+ ["Jimmy Briand|briand","FR","Rennes;Lyon;Hanovre;Guingamp;Bordeaux"],
+ ["Djibril Cissé|cisse","FR","Auxerre;Liverpool;OM;Sunderland;Panathinaikos;Lazio;QPR;Al-Gharafa;Kouban Krasnodar;Bastia"],
+ ["Louis Saha|saha","FR","Metz;Newcastle;Fulham;Manchester United;Everton;Tottenham;Sunderland;Lazio"],
+ ["Steed Malbranque|malbranque","FR","Lyon;Fulham;Tottenham;Sunderland;Saint-Étienne;Lyon;Caen"],
+ ["Mapou Yanga-Mbiwa|yanga mbiwa|yanga-mbiwa|mapou","FR","Montpellier;Newcastle;AS Roma;Lyon"],
+ ["Gaël Clichy|clichy","FR","Cannes;Arsenal;Manchester City;Istanbul Başakşehir;Servette"],
+ ["Bacary Sagna|sagna","FR","Auxerre;Arsenal;Manchester City;Benevento;Montréal Impact"],
+ ["William Gallas|gallas","FR","Caen;OM;Chelsea;Arsenal;Tottenham;Perth Glory"],
+ ["Philippe Mexès|mexes","FR","Auxerre;AS Roma;Milan AC"],
+ ["Jean-Alain Boumsong|boumsong","FR","Le Havre;Auxerre;Rangers;Newcastle;Juventus;Lyon;Panathinaikos"],
+ ["Sébastien Squillaci|squillaci","FR","Monaco;Ajaccio;Lyon;Séville;Arsenal;Bastia"],
+ ["Mateja Kežman|kezman","RS","Partizan Belgrade;PSV;Chelsea;Atlético;Fenerbahçe;PSG;Zenit;BATE Borisov"],
+ ["Benoît Pedretti|pedretti","FR","Sochaux;OM;Lyon;Auxerre;Lille;Ajaccio;Nancy"],
+ ["Sidney Govou|govou","FR","Lyon;Panathinaikos;Évian"],
+ ["Grégory Coupet|coupet","FR","Saint-Étienne;Lyon;Atlético;PSG"],
+ ["Mickaël Landreau|landreau","FR","Nantes;PSG;Lille;Bastia"]
+];
+
+// ── Mardi : l'Imposteur — [club, imposteur (n'y a jamais joué), 3 joueurs passés par le club] ──
+const IMPOSTEUR = [
+ ["OM","Thierry Henry",["Didier Drogba","Franck Ribéry","Samir Nasri"]],
+ ["PSG","Zinédine Zidane",["Ronaldinho","David Beckham","Javier Pastore"]],
+ ["Real Madrid","Ronaldinho",["Michael Owen","Nicolas Anelka","David Beckham"]],
+ ["Barcelone","Cristiano Ronaldo",["Thierry Henry","Lilian Thuram","Zlatan Ibrahimović"]],
+ ["Milan AC","Alessandro Del Piero",["David Beckham","Ronaldinho","Andriy Shevchenko"]],
+ ["Inter","Kaká",["Ronaldo","Zlatan Ibrahimović","Samuel Eto'o"]],
+ ["Juventus","Robert Pirès",["David Trezeguet","Lilian Thuram","Patrick Vieira"]],
+ ["Arsenal","Claude Makélélé",["Robert Pirès","Sylvain Wiltord","Cesc Fàbregas"]],
+ ["Chelsea","Steven Gerrard",["Claude Makélélé","Nicolas Anelka","Fernando Torres"]],
+ ["Manchester United","Marcel Desailly",["Fabien Barthez","Éric Cantona","Laurent Blanc"]],
+ ["Monaco","Franck Ribéry",["Thierry Henry","David Trezeguet","Ludovic Giuly"]],
+ ["Lyon","Dimitri Payet",["Juninho Pernambucano","Michael Essien","Yoann Gourcuff"]],
+ ["Bordeaux","Robert Pirès",["Zinédine Zidane","Bixente Lizarazu","Yoann Gourcuff"]],
+ ["Liverpool","Wayne Rooney",["Michael Owen","Fernando Torres","Luis Suárez"]],
+ ["Bayern","Mesut Özil",["Franck Ribéry","Arjen Robben","Bixente Lizarazu"]],
+ ["Saint-Étienne","Karim Benzema",["Dimitri Payet","Pierre-Emerick Aubameyang","Bafétimbi Gomis"]],
+ ["Manchester City","Didier Drogba",["Patrick Vieira","Yaya Touré","Carlos Tevez"]],
+ ["Atlético","Andrés Iniesta",["Fernando Torres","Radamel Falcao","Antoine Griezmann"]],
+ ["Naples","Gabriel Batistuta",["Gonzalo Higuaín","Edinson Cavani","Romelu Lukaku"]],
+ ["Galatasaray","Zlatan Ibrahimović",["Didier Drogba","Wesley Sneijder","Radamel Falcao"]],
+ ["Real Madrid","Thierry Henry",["Zinédine Zidane","Luís Figo","Roberto Carlos"]],
+ ["Barcelone","Kaká",["Ronaldinho","Samuel Eto'o","Ronaldo"]],
+ ["PSG","Didier Drogba",["Pauleta","Nicolas Anelka","Zlatan Ibrahimović"]],
+ ["OM","Juninho Pernambucano",["Jean-Pierre Papin","Fabien Barthez","Dimitri Payet"]],
+ ["Lyon","Franck Ribéry",["Karim Benzema","Alexandre Lacazette","Sonny Anderson"]],
+ ["Juventus","Ronaldo",["Alessandro Del Piero","Gianluigi Buffon","Pavel Nedvěd"]],
+ ["Milan AC","Francesco Totti",["Kaká","Andrea Pirlo","Clarence Seedorf"]],
+ ["Inter","Andriy Shevchenko",["Luís Figo","Wesley Sneijder","Patrick Vieira"]],
+ ["Arsenal","Frank Lampard",["Thierry Henry","Dennis Bergkamp","Mesut Özil"]],
+ ["Chelsea","Wayne Rooney",["Didier Drogba","Michael Essien","Petr Čech"]],
+ ["Liverpool","Cesc Fàbregas",["Steven Gerrard","Xabi Alonso","Mohamed Salah"]],
+ ["Manchester United","Thierry Henry",["David Beckham","Cristiano Ronaldo","Wayne Rooney"]],
+ ["Manchester City","Steven Gerrard",["Sergio Agüero","Frank Lampard","David Silva"]],
+ ["Bayern","Marco Reus",["Toni Kroos","Robert Lewandowski","Arjen Robben"]],
+ ["Dortmund","Toni Kroos",["Robert Lewandowski","Erling Haaland","Pierre-Emerick Aubameyang"]],
+ ["Atlético","Xavi",["Sergio Agüero","Diego Forlán","Diego Godín"]],
+ ["Monaco","Karim Benzema",["Kylian Mbappé","Radamel Falcao","Ludovic Giuly"]],
+ ["Saint-Étienne","Alexandre Lacazette",["William Saliba","Blaise Matuidi","Bafétimbi Gomis"]],
+ ["Bordeaux","Karim Benzema",["Jules Koundé","Aurélien Tchouaméni","Sylvain Wiltord"]],
+ ["Lille","Franck Ribéry",["Eden Hazard","Victor Osimhen","Mike Maignan"]],
+ ["Naples","Lautaro Martínez",["Khvicha Kvaratskhelia","Victor Osimhen","Edinson Cavani"]],
+ ["AS Roma","Alessandro Del Piero",["Francesco Totti","Mohamed Salah","Cafu"]],
+ ["Tottenham","Frank Lampard",["Harry Kane","Son Heung-min","Luka Modrić"]],
+ ["Rennes","N'Golo Kanté",["Ousmane Dembélé","Eduardo Camavinga","Petr Čech"]],
+ ["Galatasaray","Ronaldinho",["Victor Osimhen","Bafétimbi Gomis","Franck Ribéry"]],
+ ["Fenerbahçe","Zlatan Ibrahimović",["Mesut Özil","Roberto Carlos","Nicolas Anelka"]],
+ ["Ajax","Arjen Robben",["Luis Suárez","Zlatan Ibrahimović","Wesley Sneijder"]],
+ ["Benfica","Cristiano Ronaldo",["Ángel Di María","Rui Costa","Jan Oblak"]],
+ ["Valence","Andrés Iniesta",["David Villa","David Silva","Edinson Cavani"]],
+ ["Séville","Sergio Busquets",["Sergio Ramos","Dani Alves","Frédéric Kanouté"]],
+ ["Porto","Luís Figo",["Radamel Falcao","Iker Casillas","Casemiro"]],
+ ["Bayer Leverkusen","Thomas Müller",["Michael Ballack","Toni Kroos","Son Heung-min"]],
+ ["Schalke 04","Miroslav Klose",["Raúl","Manuel Neuer","Mesut Özil"]],
+ ["Inter Miami","Neymar",["Lionel Messi","Luis Suárez","Sergio Busquets"]],
+ ["LA Galaxy","Thierry Henry",["David Beckham","Zlatan Ibrahimović","Steven Gerrard"]],
+ ["Fluminense","Neymar",["Thiago Silva","Marcelo","Ronaldinho"]],
+ ["Santos","Ronaldinho",["Pelé","Neymar","Robinho"]],
+ ["Boca Juniors","Lionel Messi",["Juan Román Riquelme","Carlos Tevez","Edinson Cavani"]],
+ ["River Plate","Sergio Agüero",["Gonzalo Higuaín","Hernán Crespo","Radamel Falcao"]],
+ ["Real Sociedad","Xavi",["Antoine Griezmann","Xabi Alonso","David Silva"]]
+];
+
+// ── Mercredi : Joueur mystère — 3 indices de départ, puis des indices de plus en plus faciles ──
+const MYSTERE = [
+ {a:"Didier Drogba|drogba", nat:"CI", pos:"A", born:"11 mars 1978", clues:[
+   "A commencé sa carrière pro en Ligue 2, au Mans",
+   "N'a joué qu'une seule saison à l'OM (2003-04)",
+   "A connu deux passages dans le même club anglais",
+   "Meilleur buteur de l'histoire de sa sélection",
+   "A marqué le tir au but décisif de la finale de Ligue des champions 2012",
+   "Légende de Chelsea"]},
+ {a:"Andrea Pirlo|pirlo", nat:"IT", pos:"M", born:"19 mai 1979", clues:[
+   "Formé à Brescia",
+   "A fini sa carrière en MLS, à New York City FC",
+   "A remporté deux Ligues des champions (2003 et 2007)",
+   "Champion du monde en 2006",
+   "Rejoint la Juventus libre en 2011 après dix ans au Milan AC",
+   "Meneur de jeu à la barbe légendaire, roi des coups francs"]},
+ {a:"Robert Pirès|pires", nat:"FR", pos:"M", born:"29 octobre 1973", clues:[
+   "Formé au FC Metz",
+   "A terminé sa carrière en Inde, au FC Goa",
+   "A joué à l'OM de 1998 à 2000",
+   "Champion du monde 1998 et champion d'Europe 2000",
+   "Passé par Villarreal et Aston Villa",
+   "Membre des « Invincibles » d'Arsenal en 2003-04"]},
+ {a:"Radamel Falcao|falcao", nat:"CO", pos:"A", born:"10 février 1986", clues:[
+   "Formé à River Plate",
+   "A gagné la Ligue Europa deux années de suite avec deux clubs différents (2011 et 2012)",
+   "Prêté à Manchester United puis à Chelsea",
+   "A joué à Monaco",
+   "Meilleur buteur de l'histoire de sa sélection",
+   "Surnommé « El Tigre »"]},
+ {a:"Laurent Blanc|blanc", nat:"FR", pos:"D", born:"19 novembre 1965", clues:[
+   "A débuté comme milieu offensif à Montpellier",
+   "A fini sa carrière à Manchester United",
+   "Suspendu pour la finale de la Coupe du monde 1998",
+   "Auteur du premier but en or de l'histoire de la Coupe du monde",
+   "Plus tard entraîneur de Bordeaux, de l'équipe de France et du PSG",
+   "Surnommé « le Président »"]},
+ {a:"Luís Figo|figo", nat:"PT", pos:"M", born:"4 novembre 1972", clues:[
+   "Formé au Sporting Portugal",
+   "A terminé sa carrière à l'Inter Milan",
+   "Vainqueur de la Ligue des champions 2002",
+   "Ballon d'or 2000",
+   "A provoqué un scandale en passant directement du Barça au Real Madrid en 2000",
+   "Ailier star du Portugal avant Cristiano Ronaldo"]},
+ {a:"Juninho Pernambucano|juninho", nat:"BR", pos:"M", born:"30 janvier 1975", clues:[
+   "Formé au Sport Recife",
+   "A joué en MLS aux New York Red Bulls",
+   "Légende du Vasco da Gama",
+   "Sept fois champion de France d'affilée",
+   "Considéré comme l'un des meilleurs tireurs de coups francs de l'histoire",
+   "Meneur de jeu brésilien de l'Olympique Lyonnais"]},
+ // ── Joueurs actuels ──
+ {a:"Kylian Mbappé|mbappe", nat:"FR", pos:"A", born:"20 décembre 1998", clues:[
+   "A été formé à l'AS Bondy, en Seine-Saint-Denis",
+   "Champion de France avec Monaco en 2017",
+   "Champion du monde à 19 ans",
+   "Auteur d'un triplé en finale de la Coupe du monde 2022",
+   "Meilleur buteur de l'histoire du PSG",
+   "A rejoint le Real Madrid en 2024"]},
+ {a:"Erling Haaland|haaland", nat:"NO", pos:"A", born:"21 juillet 2000", clues:[
+   "Né à Leeds, en Angleterre",
+   "Fils d'un ancien joueur de Premier League",
+   "A marqué 9 buts en un seul match de Coupe du monde des moins de 20 ans (2019)",
+   "Passé par le Red Bull Salzbourg puis le Borussia Dortmund",
+   "36 buts lors de sa première saison de Premier League",
+   "Avant-centre de Manchester City"]},
+ {a:"Lamine Yamal|yamal|lamine", nat:"ES", pos:"A", born:"13 juillet 2007", clues:[
+   "Formé à la Masia",
+   "Plus jeune buteur de l'histoire de l'Euro",
+   "Champion d'Europe 2024 au lendemain de ses 17 ans",
+   "Lauréat du trophée Kopa (meilleur jeune) en 2024 et 2025",
+   "Deuxième du Ballon d'or 2025",
+   "Ailier droit du FC Barcelone"]},
+ {a:"Mohamed Salah|salah|mo salah", nat:"EG", pos:"A", born:"15 juin 1992", clues:[
+   "Formé au club égyptien d'Al-Mokawloon",
+   "Passé par Bâle, Chelsea, la Fiorentina et l'AS Rome",
+   "32 buts lors de sa première saison à Liverpool (2017-18)",
+   "Vainqueur de la Ligue des champions 2019",
+   "Surnommé « le Pharaon »",
+   "Ailier star de Liverpool"]},
+ {a:"Jude Bellingham|bellingham", nat:"EN", pos:"M", born:"29 juin 2003", clues:[
+   "Formé à Birmingham City, qui a retiré son numéro 22 après son départ",
+   "Passé par le Borussia Dortmund",
+   "Auteur d'un retourné acrobatique décisif contre la Slovaquie à l'Euro 2024",
+   "Vainqueur de la Ligue des champions 2024",
+   "A rejoint le Real Madrid en 2023",
+   "Milieu de l'équipe d'Angleterre"]},
+ {a:"Ousmane Dembélé|dembele", nat:"FR", pos:"A", born:"15 mai 1997", clues:[
+   "Formé au Stade Rennais",
+   "Passé par le Borussia Dortmund",
+   "Recruté par le Barça en 2017 pour remplacer Neymar",
+   "Champion du monde 2018",
+   "Vainqueur de la Ligue des champions 2025 avec le PSG",
+   "Ballon d'or 2025"]},
+ {a:"Vinícius Júnior|vinicius|vinicius junior|vini|vini jr", nat:"BR", pos:"A", born:"12 juillet 2000", clues:[
+   "Formé à Flamengo",
+   "Arrivé en Europe en 2018",
+   "Buteur en finale de la Ligue des champions 2022 contre Liverpool",
+   "Encore buteur en finale de la Ligue des champions 2024 contre Dortmund",
+   "Élu meilleur joueur FIFA The Best 2024",
+   "Ailier gauche brésilien du Real Madrid"]},
+ {a:"Achraf Hakimi|hakimi", nat:"MA", pos:"D", born:"4 novembre 1998", clues:[
+   "Né à Madrid",
+   "Passé par le Borussia Dortmund et l'Inter Milan",
+   "A qualifié son pays d'une panenka contre l'Espagne au Mondial 2022",
+   "Demi-finaliste de la Coupe du monde 2022",
+   "Vainqueur de la Ligue des champions 2025",
+   "Latéral droit marocain du PSG"]}
+];
+
+
+// ── Jeudi : Top liste — réponses "Nom|alias|alias", l = libellé indice ──
+const TOPS = [
+ {t:"Les vainqueurs du Ballon d'or de 2000 à 2009", kind:"joueurs", items:[
+   {l:"2000",a:"Luís Figo|figo"},{l:"2001",a:"Michael Owen|owen"},{l:"2002",a:"Ronaldo|ronaldo nazario|r9|ronaldo luis nazario de lima"},
+   {l:"2003",a:"Pavel Nedvěd|nedved"},{l:"2004",a:"Andriy Shevchenko|shevchenko|chevtchenko|andrei shevchenko"},{l:"2005",a:"Ronaldinho"},
+   {l:"2006",a:"Fabio Cannavaro|cannavaro"},{l:"2007",a:"Kaká|kaka"},{l:"2008",a:"Cristiano Ronaldo|cr7|cristiano"},{l:"2009",a:"Lionel Messi|messi|leo messi"}]},
+ {t:"Les 8 pays champions du monde", kind:"pays", items:[
+   {l:"5 titres",a:"Brésil|bresil"},{l:"4 titres",a:"Allemagne|rfa|allemagne de l ouest"},{l:"4 titres",a:"Italie"},{l:"3 titres",a:"Argentine"},
+   {l:"2 titres",a:"France"},{l:"2 titres",a:"Uruguay"},{l:"1 titre",a:"Angleterre"},{l:"1 titre",a:"Espagne"}]},
+ {t:"Les clubs champions de France entre 2000 et 2025", kind:"clubs", items:[
+   {l:"2000, 2017",a:"Monaco|as monaco|asm"},{l:"2001",a:"Nantes|fc nantes|fcn"},{l:"2002 → 2008",a:"Lyon|ol|olympique lyonnais"},
+   {l:"2009",a:"Bordeaux|girondins|girondins de bordeaux|fcgb"},{l:"2010",a:"OM|marseille|olympique de marseille"},{l:"2011, 2021",a:"Lille|losc"},
+   {l:"2012",a:"Montpellier|mhsc"},{l:"2013 → 2025 (sauf 2017 et 2021)",a:"PSG|paris|paris saint germain|paris sg"}]},
+ {t:"Les pays vainqueurs de l'Euro depuis 1984", kind:"pays", items:[
+   {l:"1984, 2000",a:"France"},{l:"1988",a:"Pays-Bas|pays bas|hollande"},{l:"1992",a:"Danemark"},{l:"1996",a:"Allemagne"},
+   {l:"2004",a:"Grèce|grece"},{l:"2008, 2012, 2024",a:"Espagne"},{l:"2016",a:"Portugal"},{l:"2020",a:"Italie"}]},
+ {t:"Les 6 lauréats différents du Ballon d'or depuis 2010", kind:"joueurs", items:[
+   {l:"8 au total",a:"Lionel Messi|messi|leo messi"},{l:"2013, 2014, 2016, 2017",a:"Cristiano Ronaldo|cr7|cristiano|ronaldo"},{l:"2018",a:"Luka Modrić|modric"},
+   {l:"2022",a:"Karim Benzema|benzema"},{l:"2024",a:"Rodri|rodrigo hernandez"},{l:"2025",a:"Ousmane Dembélé|dembele"}]},
+ {t:"Les clubs vainqueurs de la Ligue des champions entre 2000 et 2009", kind:"clubs", items:[
+   {l:"2000, 2002",a:"Real Madrid|real|madrid"},{l:"2001",a:"Bayern|bayern munich"},{l:"2003, 2007",a:"Milan AC|milan|ac milan"},
+   {l:"2004",a:"Porto|fc porto"},{l:"2005",a:"Liverpool"},{l:"2006, 2009",a:"Barcelone|barca|fc barcelone|barcelona"},{l:"2008",a:"Manchester United|man united|manchester|mu"}]},
+ {t:"Les pays organisateurs de la Coupe du monde de 1990 à 2022", kind:"pays", items:[
+   {l:"1990",a:"Italie"},{l:"1994",a:"États-Unis|etats unis|usa"},{l:"1998",a:"France"},{l:"2002",a:"Corée du Sud|coree du sud|coree"},{l:"2002",a:"Japon"},
+   {l:"2006",a:"Allemagne"},{l:"2010",a:"Afrique du Sud|afrique du sud"},{l:"2014",a:"Brésil|bresil"},{l:"2018",a:"Russie"},{l:"2022",a:"Qatar"}]},
+ {t:"Les clubs français finalistes de la Coupe des champions / Ligue des champions", kind:"clubs", items:[
+   {l:"1956, 1959",a:"Reims|stade de reims"},{l:"1976",a:"Saint-Étienne|saint etienne|asse|st etienne"},{l:"1991, 1993",a:"OM|marseille|olympique de marseille"},
+   {l:"2004",a:"Monaco|as monaco"},{l:"2020, 2025",a:"PSG|paris|paris saint germain"}]},
+ {t:"Les clubs champions d'Angleterre depuis la création de la Premier League (1993 → 2025)", kind:"clubs", items:[
+   {l:"13 titres",a:"Manchester United|man united|mu"},{l:"1995",a:"Blackburn|blackburn rovers"},{l:"3 titres",a:"Arsenal"},{l:"5 titres",a:"Chelsea"},
+   {l:"8 titres",a:"Manchester City|man city|city"},{l:"2016",a:"Leicester|leicester city"},{l:"2020, 2025",a:"Liverpool"}]},
+ {t:"Les pays vainqueurs de la Coupe d'Afrique des nations de 2000 à 2023", kind:"pays", items:[
+   {l:"2000, 2002, 2017",a:"Cameroun"},{l:"2004",a:"Tunisie"},{l:"2006, 2008, 2010",a:"Égypte|egypte"},{l:"2012",a:"Zambie"},
+   {l:"2013",a:"Nigeria"},{l:"2015, 2023",a:"Côte d'Ivoire|cote d ivoire|cote divoire"},{l:"2019",a:"Algérie|algerie"},{l:"2021",a:"Sénégal|senegal"}]},
+ {t:"Les Français vainqueurs du Ballon d'or", kind:"joueurs", items:[
+   {l:"1958",a:"Raymond Kopa|kopa"},{l:"1983, 1984, 1985",a:"Michel Platini|platini"},{l:"1991",a:"Jean-Pierre Papin|papin|jpp"},
+   {l:"1998",a:"Zinédine Zidane|zidane|zizou"},{l:"2022",a:"Karim Benzema|benzema"},{l:"2025",a:"Ousmane Dembélé|dembele"}]},
+ {t:"Les clubs vainqueurs de la Ligue des champions entre 2016 et 2025", kind:"clubs", items:[
+   {l:"2016, 2017, 2018, 2022, 2024",a:"Real Madrid|real|madrid"},{l:"2019",a:"Liverpool"},{l:"2020",a:"Bayern|bayern munich"},
+   {l:"2021",a:"Chelsea"},{l:"2023",a:"Manchester City|man city|city"},{l:"2025",a:"PSG|paris|paris saint germain"}]}
+];
+
+
+// Dispositions types pour le Onze manquant (x, y en % sur le terrain)
+const F433=[["G",50,90],["D",86,70],["D",62,76],["D",38,76],["D",14,70],["M",74,50],["M",50,56],["M",26,50],["A",80,22],["A",50,13],["A",20,22]];
+const F4231=[["G",50,90],["D",86,70],["D",62,76],["D",38,76],["D",14,70],["M",62,56],["M",38,56],["M",82,32],["M",50,34],["M",18,32],["A",50,13]];
+const F442=[["G",50,90],["D",86,70],["D",62,76],["D",38,76],["D",14,70],["M",86,45],["M",62,52],["M",38,52],["M",14,45],["A",62,16],["A",38,16]];
+const F3421=[["G",50,90],["D",75,74],["D",50,78],["D",25,74],["M",88,50],["M",62,54],["M",38,54],["M",12,50],["A",68,25],["A",32,25],["A",50,12]];
+const mkOnze=(t,s,team,F,names)=>({t,s,team,slots:F.map((f,i)=>[f[0],f[1],f[2],names[i]])});
+// ── Vendredi : le Onze manquant — x/y en % sur le terrain ──
+const ONZES = [
+ {t:"France – Brésil (3-0)", s:"Finale de la Coupe du monde · 12 juillet 1998 · Saint-Denis", team:"France", slots:[
+   ["G",50,90,"Fabien Barthez|barthez"],["D",86,70,"Lilian Thuram|thuram"],["D",62,76,"Marcel Desailly|desailly"],["D",38,76,"Frank Lebœuf|leboeuf|lebeuf"],["D",14,70,"Bixente Lizarazu|lizarazu"],
+   ["M",78,50,"Christian Karembeu|karembeu"],["M",50,56,"Didier Deschamps|deschamps"],["M",22,50,"Emmanuel Petit|petit"],
+   ["M",64,32,"Zinédine Zidane|zidane|zizou"],["M",36,32,"Youri Djorkaeff|djorkaeff"],["A",50,13,"Stéphane Guivarc'h|guivarch|guivarc h"]]},
+ {t:"OM – Milan AC (1-0)", s:"Finale de la Ligue des champions · 26 mai 1993 · Munich", team:"OM", slots:[
+   ["G",50,90,"Fabien Barthez|barthez"],["D",86,70,"Jocelyn Angloma|angloma"],["D",62,76,"Basile Boli|boli"],["D",38,76,"Marcel Desailly|desailly"],["D",14,70,"Éric Di Meco|di meco|dimeco"],
+   ["M",74,50,"Franck Sauzée|sauzee"],["M",50,56,"Didier Deschamps|deschamps"],["M",26,50,"Jean-Jacques Eydelie|eydelie"],
+   ["A",80,22,"Abedi Pelé|pele|abedi"],["A",50,13,"Rudi Völler|voller|voeller"],["A",20,22,"Alen Bokšić|boksic"]]},
+ {t:"France – Croatie (4-2)", s:"Finale de la Coupe du monde · 15 juillet 2018 · Moscou", team:"France", slots:[
+   ["G",50,90,"Hugo Lloris|lloris"],["D",86,70,"Benjamin Pavard|pavard"],["D",62,76,"Raphaël Varane|varane"],["D",38,76,"Samuel Umtiti|umtiti"],["D",14,70,"Lucas Hernandez|hernandez|lucas"],
+   ["M",62,56,"N'Golo Kanté|kante"],["M",38,56,"Paul Pogba|pogba"],
+   ["A",82,32,"Kylian Mbappé|mbappe"],["M",50,34,"Antoine Griezmann|griezmann"],["M",18,32,"Blaise Matuidi|matuidi"],["A",50,13,"Olivier Giroud|giroud"]]},
+ {t:"Pays-Bas – Espagne (0-1 a.p.)", s:"Finale de la Coupe du monde · 11 juillet 2010 · Johannesburg", team:"Espagne", slots:[
+   ["G",50,90,"Iker Casillas|casillas"],["D",86,70,"Sergio Ramos|ramos"],["D",62,76,"Gerard Piqué|pique"],["D",38,76,"Carles Puyol|puyol"],["D",14,70,"Joan Capdevila|capdevila"],
+   ["M",62,56,"Sergio Busquets|busquets"],["M",38,56,"Xabi Alonso|alonso|xabi"],
+   ["A",82,32,"Pedro|pedro rodriguez"],["M",50,34,"Xavi|xavi hernandez"],["M",18,32,"Andrés Iniesta|iniesta"],["A",50,13,"David Villa|villa"]]},
+ mkOnze("Barcelone – Manchester United (2-0)","Finale de la Ligue des champions · 27 mai 2009 · Rome","Barcelone",F433,
+   ["Víctor Valdés|valdes","Carles Puyol|puyol","Yaya Touré|toure|yaya","Gerard Piqué|pique","Sylvinho","Xavi|xavi hernandez","Sergio Busquets|busquets","Andrés Iniesta|iniesta","Lionel Messi|messi","Samuel Eto'o|eto o|etoo","Thierry Henry|henry"]),
+ mkOnze("Milan AC – Liverpool (3-3, 2-3 t.a.b.)","Finale de la Ligue des champions · 25 mai 2005 · Istanbul","Liverpool",F4231,
+   ["Jerzy Dudek|dudek","Steve Finnan|finnan","Jamie Carragher|carragher","Sami Hyypiä|hyypia","Djimi Traoré|traore","Steven Gerrard|gerrard","Xabi Alonso|alonso|xabi","Luis García|luis garcia|garcia","Harry Kewell|kewell","John Arne Riise|riise","Milan Baroš|baros"]),
+ mkOnze("PSG – Inter (5-0)","Finale de la Ligue des champions · 31 mai 2025 · Munich","PSG",F433,
+   ["Gianluigi Donnarumma|donnarumma","Achraf Hakimi|hakimi","Marquinhos","Willian Pacho|pacho","Nuno Mendes|mendes","João Neves|neves|joao neves","Vitinha","Fabián Ruiz|fabian ruiz|ruiz","Désiré Doué|doue","Ousmane Dembélé|dembele","Khvicha Kvaratskhelia|kvaratskhelia|kvara"]),
+ mkOnze("France – Portugal (0-1 a.p.)","Finale de l'Euro · 10 juillet 2016 · Saint-Denis","Portugal",F442,
+   ["Rui Patrício|patricio|rui patricio","Cédric Soares|cedric|soares","Pepe","José Fonte|fonte","Raphaël Guerreiro|guerreiro","João Mário|joao mario","William Carvalho|carvalho|william","Adrien Silva|adrien","Renato Sanches|sanches|renato","Nani","Cristiano Ronaldo|ronaldo|cristiano|cr7"]),
+ mkOnze("Real Madrid – Atlético (4-1 a.p.)","Finale de la Ligue des champions · 24 mai 2014 · Lisbonne","Real Madrid",F433,
+   ["Iker Casillas|casillas","Dani Carvajal|carvajal","Raphaël Varane|varane","Sergio Ramos|ramos","Fábio Coentrão|coentrao","Luka Modrić|modric","Sami Khedira|khedira","Ángel Di María|di maria|dimaria","Gareth Bale|bale","Karim Benzema|benzema","Cristiano Ronaldo|ronaldo|cristiano|cr7"]),
+ mkOnze("Argentine – France (3-3, 4-2 t.a.b.)","Finale de la Coupe du monde · 18 décembre 2022 · Lusail","Argentine",F433,
+   ["Emiliano Martínez|martinez|dibu","Nahuel Molina|molina","Cristian Romero|romero","Nicolás Otamendi|otamendi","Nicolás Tagliafico|tagliafico","Rodrigo De Paul|de paul|depaul","Enzo Fernández|enzo|fernandez","Alexis Mac Allister|mac allister|macallister","Lionel Messi|messi","Julián Álvarez|alvarez|julian alvarez","Ángel Di María|di maria|dimaria"]),
+ mkOnze("Allemagne – Brésil (0-2)","Finale de la Coupe du monde · 30 juin 2002 · Yokohama","Brésil",F3421,
+   ["Marcos","Lúcio|lucio","Edmílson|edmilson","Roque Júnior|roque junior|roque","Cafu","Gilberto Silva|gilberto","Kléberson|kleberson","Roberto Carlos","Ronaldinho","Rivaldo","Ronaldo|r9|ronaldo nazario"]),
+ mkOnze("Italie – France (1-1, 5-3 t.a.b.)","Finale de la Coupe du monde · 9 juillet 2006 · Berlin","Italie",F4231,
+   ["Gianluigi Buffon|buffon","Gianluca Zambrotta|zambrotta","Fabio Cannavaro|cannavaro","Marco Materazzi|materazzi","Fabio Grosso|grosso","Gennaro Gattuso|gattuso","Andrea Pirlo|pirlo","Mauro Camoranesi|camoranesi","Francesco Totti|totti","Simone Perrotta|perrotta","Luca Toni|toni"])
+];
+
+// ── Samedi : Plus ou moins ──
+const PM = [
+ {q:"Qui a marqué le plus de buts en Coupe du monde ?", unit:"buts en CdM", items:[
+   ["Miroslav Klose",16],["Ronaldo",15],["Gerd Müller",14],["Just Fontaine",13],["Pelé",12],["Sándor Kocsis",11],["Jürgen Klinsmann",11],
+   ["Gary Lineker",10],["Gabriel Batistuta",10],["Thomas Müller",10],["Eusébio",9],["Paolo Rossi",9],["Roberto Baggio",9],["Christian Vieri",9],
+   ["Diego Maradona",8],["Rivaldo",8],["Thierry Henry",6],["Zinédine Zidane",5],["Michel Platini",5]]},
+ {q:"Qui a le plus de sélections en équipe de France ?", unit:"sélections", items:[
+   ["Hugo Lloris",145],["Lilian Thuram",142],["Antoine Griezmann",137],["Olivier Giroud",137],["Thierry Henry",123],["Marcel Desailly",116],
+   ["Zinédine Zidane",108],["Patrick Vieira",107],["Didier Deschamps",103],["Bixente Lizarazu",97],["Laurent Blanc",97],["Karim Benzema",97],
+   ["Raphaël Varane",93],["Sylvain Wiltord",92],["Fabien Barthez",87],["Youri Djorkaeff",82],["Franck Ribéry",81],["Robert Pirès",79],
+   ["Michel Platini",72],["David Trezeguet",71],["Claude Makélélé",71],["Emmanuel Petit",63],["Jean-Pierre Papin",54],["Éric Cantona",45]]},
+ {q:"Qui a remporté le plus de Ballons d'or ?", unit:"Ballons d'or", items:[
+   ["Lionel Messi",8],["Cristiano Ronaldo",5],["Michel Platini",3],["Johan Cruyff",3],["Marco van Basten",3],["Franz Beckenbauer",2],
+   ["Kevin Keegan",2],["Karl-Heinz Rummenigge",2],["Alfredo Di Stéfano",2],["Ronaldo",2],["Zinédine Zidane",1],["Jean-Pierre Papin",1],
+   ["Karim Benzema",1],["George Weah",1],["Kaká",1],["Luka Modrić",1]]},
+ {q:"Quel club est le plus ancien ?", unit:"fondé en", pre:"fondé en ", low:true, items:[
+   ["Manchester United",1878],["Arsenal",1886],["Liverpool",1892],["Porto",1893],["Juventus",1897],["OM",1899],
+   ["Bayern",1900],["Ajax",1900],["River Plate",1901],["Real Madrid",1902],["Atlético",1903],["Benfica",1904],["Chelsea",1905],
+   ["Boca Juniors",1905],["Lens",1906],["Inter",1908],["Dortmund",1909],["Monaco",1924],["Nantes",1943],["Lille",1944],["Lyon",1950],["PSG",1970]]},
+ {q:"Qui a gagné le plus de Ligues des champions ?", unit:"C1 gagnées", items:[
+   ["Toni Kroos",6],["Paco Gento",6],["Cristiano Ronaldo",5],["Karim Benzema",5],["Gareth Bale",5],["Marcelo",5],["Paolo Maldini",5],
+   ["Lionel Messi",4],["Xavi",4],["Andrés Iniesta",4],["Clarence Seedorf",4],["Raúl",3],["Iker Casillas",3],["Carles Puyol",3],
+   ["Andrea Pirlo",2],["Zinédine Zidane",1],["Thierry Henry",1],["Didier Drogba",1],["Kaká",1],["Ronaldinho",1],["Neymar",1],
+   ["Zlatan Ibrahimović",0],["Gianluigi Buffon",0]]},
+ {q:"Qui a reçu son (premier) Ballon d'or le plus tôt ?", unit:"Ballon d'or", pre:"Ballon d'or ", low:true, items:[
+   ["Michel Platini",1983],["Marco van Basten",1988],["Jean-Pierre Papin",1991],["Roberto Baggio",1993],["George Weah",1995],["Ronaldo",1997],
+   ["Zinédine Zidane",1998],["Luís Figo",2000],["Michael Owen",2001],["Pavel Nedvěd",2003],["Andriy Shevchenko",2004],["Ronaldinho",2005],
+   ["Fabio Cannavaro",2006],["Kaká",2007],["Cristiano Ronaldo",2008],["Lionel Messi",2009],["Luka Modrić",2018],["Karim Benzema",2022],["Rodri",2024],["Ousmane Dembélé",2025]]},
+ {q:"Qui a marqué le plus de buts avec l'équipe de France ?", unit:"buts en Bleu", items:[
+   ["Olivier Giroud",57],["Thierry Henry",51],["Antoine Griezmann",44],["Michel Platini",41],["Karim Benzema",37],["David Trezeguet",34],
+   ["Zinédine Zidane",31],["Just Fontaine",30],["Jean-Pierre Papin",30],["Youri Djorkaeff",28],["Sylvain Wiltord",26],["Éric Cantona",20],
+   ["Franck Ribéry",16],["Robert Pirès",14],["Nicolas Anelka",14],["Lilian Thuram",2]]}
+];
+
+// ═════════════════════════ RÉGLAGES ═════════════════════════
+const TZ = "Europe/Paris", MAXPTS = 1500, OPEN_H = 7;
+const SCHEDULE = ["parcours","imposteur","mystere","top","onze","plusmoins","quiz"]; // lundi → dimanche
+const GAMES = {
+  parcours:{n:"Parcours",e:"🧭",d:"Les clubs d'un joueur apparaissent un par un. Trouve-le avec le moins de clubs possible.",
+    r:"5 joueurs : 3 classiques et 2 pour les aguerris. Tape le nom (une petite faute passe). Chaque mauvaise réponse ou indice dévoile le club suivant. 300 pts avec un seul club, 40 pts de moins par club dévoilé (minimum 100)."},
+  imposteur:{n:"L'Imposteur",e:"🕵️",d:"Trois de ces joueurs sont passés par le club. Un seul n'y a jamais joué : démasque-le.",
+    r:"5 manches, 20 secondes chacune. 200 pts par imposteur démasqué + jusqu'à 100 pts de bonus de rapidité."},
+  mystere:{n:"Joueur mystère",e:"🔎",d:"Nationalité, poste et date de naissance : à toi de deviner qui se cache derrière, avec des indices de plus en plus parlants.",
+    r:"Tu pars avec 3 indices. Tape un nom (une petite faute passe). Chaque mauvaise réponse ou indice demandé dévoile un indice de plus. 1500 pts sans indice supplémentaire, 200 de moins par indice (minimum 300)."},
+  top:{n:"Top liste",e:"📋",d:"Complète la liste de mémoire. Trois erreurs et c'est fini.",
+    r:"Tape les réponses une par une (l'orthographe approximative passe). 3 vies. Score proportionnel à la part de la liste trouvée, 1500 pts pour un sans-faute."},
+  onze:{n:"Le Onze manquant",e:"🟩",d:"Retrouve la composition d'un match mythique.",
+    r:"Tape les noms des titulaires (le nom de famille suffit). 3 vies. Score proportionnel au nombre de joueurs trouvés, 1500 pts si tu retrouves les 11."},
+  plusmoins:{n:"Plus ou moins",e:"⚖️",d:"Deux choix, un seul a raison. Enchaîne le plus longtemps possible.",
+    r:"15 duels maximum. 100 pts par bonne réponse. La première erreur arrête la série."},
+  quiz:{n:"Quiz",e:"❓",d:"Le quiz classique : 10 questions, 20 secondes chacune.",
+    r:"100 pts par bonne réponse + jusqu'à 50 pts de bonus de rapidité."}
+};
+const DAYN = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+const DAYL = ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+const MONTHS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+
+// ═════════════════════════ OUTILS ═════════════════════════
+function parisParts(d=new Date()){ const o={}; new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(d).forEach(p=>o[p.type]=p.value); return o; }
+function offsetMs(d){ const o=parisParts(d); return Date.UTC(+o.year,+o.month-1,+o.day,+o.hour%24,+o.minute,+o.second)-Math.floor(d.getTime()/1000)*1000; }
+// Jour de jeu : un jeu s'ouvre à 7h (heure de Paris) et reste le « jeu du jour » jusqu'à 7h le lendemain
+function todayStr(){ const o=parisParts(), d=`${o.year}-${o.month}-${o.day}`; return (+o.hour%24)<OPEN_H ? fmt(new Date(parse(d).getTime()-864e5)) : d; }
+function openAt(date){ const wall=parse(date).getTime()+OPEN_H*3600e3; let t=wall-offsetMs(new Date(wall)); return wall-offsetMs(new Date(t)); }
+const nextDate = d => fmt(new Date(parse(d).getTime()+864e5));
+function cdText(ms){ if(ms<=0) return "C'est ouvert !"; const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60;
+  return `${h} h ${String(m).padStart(2,"0")} min ${String(x).padStart(2,"0")} s`; }
+function teaser(){
+  const nd=nextDate(S.today), g=GAMES[gameFor(nd)], t=openAt(nd);
+  return `<div class="card teaser"><div class="tlabel">Prochain match · ${DAYL[weekOf(nd).dow]} ${OPEN_H}h</div>
+    <div class="tgame"><span class="temo">${g.e}</span><div><div class="display tname">${esc(g.n)}</div><p class="note">${esc(g.d)}</p></div></div>
+    <div class="cdwrap">Coup d'envoi dans <div class="cd" data-t="${t}">${cdText(t-Date.now())}</div></div></div>`;
+}
+const parse = d => { const [y,m,x]=d.split("-").map(Number); return new Date(Date.UTC(y,m-1,x)); };
+const fmt = dt => dt.toISOString().slice(0,10);
+function weekOf(d){
+  const dt=parse(d), dow=(dt.getUTCDay()+6)%7;
+  const th=new Date(dt.getTime()+(3-dow)*864e5), y=th.getUTCFullYear();
+  const j4=new Date(Date.UTC(y,0,4));
+  const w=1+Math.round(((th-j4)/864e5-3+(j4.getUTCDay()+6)%7)/7);
+  const mon=new Date(dt.getTime()-dow*864e5);
+  return {key:`${y}-W${String(w).padStart(2,"0")}`, num:w, year:y, dow, idx:y*53+w, days:[...Array(7)].map((_,i)=>fmt(new Date(mon.getTime()+i*864e5)))};
+}
+const nice = d => { const x=parse(d); return `${x.getUTCDate()} ${MONTHS[x.getUTCMonth()]}`; };
+function seedOf(s){ let h=1779033703^s.length; for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19;} h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0; }
+function rng(s){ let a=seedOf(s); return ()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}; }
+function shuffle(arr,r){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+// Tranche de la banque pour la semaine : la banque est mélangée une fois, puis on avance d'un cran par semaine
+function weekSlice(bank, date, per, salt){
+  const n=Math.floor(bank.length/per), order=shuffle(bank.map((_,i)=>i), rng("bank-"+salt));
+  const k=((weekOf(date).idx % n)+n)%n;
+  return order.slice(k*per,k*per+per).map(i=>bank[i]);
+}
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/œ/g,"oe").replace(/æ/g,"ae").replace(/[^a-z0-9]+/g," ").trim();
+function lev(a,b){ if(Math.abs(a.length-b.length)>2) return 9; const d=[...Array(b.length+1)].map((_,i)=>i);
+  for(let i=1;i<=a.length;i++){ let p=d[0]; d[0]=i; for(let j=1;j<=b.length;j++){ const t=d[j]; d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1)); p=t; } } return d[b.length]; }
+const aliases = a => a.split("|").map(norm);
+const display = a => a.split("|")[0];
+// Trouve l'élément qui correspond à une saisie libre : d'abord exact, puis à une faute près
+function matchItem(input, list){
+  const q=norm(input); if(!q) return -1;
+  for(let i=0;i<list.length;i++) if(aliases(list[i]).includes(q)) return i;
+  for(let i=0;i<list.length;i++) for(const a of aliases(list[i])){ const tol=a.length>=8?2:a.length>=5?1:0; if(tol && lev(q,a)<=tol) return i; }
+  return -1;
+}
+const PL = {}; P.forEach(([n,nat,pos,born,clubs])=>PL[n]={n,nat,pos,born,clubs:clubs.split(";")});
+const PNAMES = P.map(p=>p[0]);
+
+// Écusson générique aux couleurs du club (pas le logo officiel)
+function badge(club, size=64){
+  const c = CLUBS[club] || (()=>{ const pal=["#3b5b8c","#8c3b3b","#3b8c5b","#8c7a3b","#5b3b8c","#3b7a8c"]; const h=seedOf(club); return [pal[h%6],"#ffffff",club.replace(/[^A-ZÀ-Ý]/g,"").slice(0,3)||club.slice(0,3).toUpperCase(),"p"]; })();
+  const [c1,c2,sig,m]=c, id="b"+seedOf(club+size);
+  const path="M50 4 L92 16 L92 52 C92 78 72 92 50 100 C28 92 8 78 8 52 L8 16 Z";
+  let fill="";
+  if(m==="v") fill=`<rect x="0" y="0" width="50" height="104" fill="${c1}"/><rect x="50" y="0" width="50" height="104" fill="${c2}"/>`;
+  else if(m==="h") fill=`<rect x="0" y="0" width="100" height="52" fill="${c1}"/><rect x="0" y="52" width="100" height="52" fill="${c2}"/>`;
+  else if(m==="s") fill=`<rect width="100" height="104" fill="${c1}"/>${[16,40,64,88].map(x=>`<rect x="${x-6}" y="0" width="12" height="104" fill="${c2}"/>`).join("")}`;
+  else if(m==="d") fill=`<rect width="100" height="104" fill="${c2}"/><path d="M0 70 L100 10 L100 40 L0 100 Z" fill="${c1}"/>`;
+  else fill=`<rect width="100" height="104" fill="${c1}"/><rect x="0" y="62" width="100" height="10" fill="${c2}"/>`;
+  const fs = sig.length>3?20:sig.length>2?24:30;
+  return `<svg width="${size}" height="${size*1.04}" viewBox="0 0 100 104" aria-label="${esc(club)}"><defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs>
+  <g clip-path="url(#${id})">${fill}</g><path d="${path}" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="3"/>
+  <text x="50" y="52" text-anchor="middle" dominant-baseline="middle" font-family="Anton,Impact,sans-serif" font-size="${fs}" fill="#fff" stroke="#0b1f14" stroke-width="3" paint-order="stroke">${esc(sig)}</text></svg>`;
+}
+const clubChip = (club,size=52) => `<div class="club">${badge(club,size)}<span>${esc(club)}</span></div>`;
+
+// ═════════════════════════ ÉTAT & SAUVEGARDE ═════════════════════════
+const S = { view:"loading", db:null, user:null, uid:null, solo:false, readOnly:false, players:{}, names:{}, slow:false, err:"",
+  today:todayStr(), board:"week", play:null, recapKey:null, introDate:null, pseudoDraft:"" };
+S.week = weekOf(S.today);
+const local = { pseudo:"", days:{} };
+let testBox = { pseudo:"Test", days:{} };   // mode test : bac à sable, rien n'est enregistré
+const me = () => S.test ? testBox : S.solo ? local : (S.players[S.uid] || null);
+const nameOf = uid => { const p=S.players[uid]; return (p&&p.pseudo) || S.names[uid] || "Joueur"; };
+const gameFor = date => SCHEDULE[weekOf(date).dow];
+const keyFor = date => date+"_"+gameFor(date);             // clé d'une partie du nouveau format
+function entryFor(p,date){ const d=(p&&p.days)||{}; return d[keyFor(date)] || null; }
+function legacyFor(p,date){ const e=((p&&p.days)||{})[date]; return e && !e.game ? e : null; } // ancien quiz (avant le programme)
+// Les parties de l'ancienne version (sans jeu associé) ne bloquent plus le jeu du jour et ne comptent plus
+function bestFor(p,date){ return entryFor(p,date); }
+
+// persist() et init() : voir backend_claude.js (artifact) ou backend_web.js (site Vercel)
+const save = () => { const z=S.play; persist({days:{[z.key]:z.e}}); };
+
+// ═════════════════════════ CLASSEMENTS ═════════════════════════
+const weekKeyBefore = key => { const d=weekDate(key); return d ? weekOf(fmt(new Date(parse(d).getTime()-7*864e5))).key : null; };
+const WEEKDATE = {};
+function weekDate(key){ if(WEEKDATE[key]) return WEEKDATE[key]; const [y,w]=key.split("-W").map(Number); const j4=new Date(Date.UTC(y,0,4)); const mon=new Date(j4.getTime()-((j4.getUTCDay()+6)%7)*864e5+(w-1)*7*864e5); return WEEKDATE[key]=fmt(mon); }
+// Points par semaine d'un joueur : { "2026-W45": 4200, … } (une seule partie comptée par jour)
+function playerWeeks(p){
+  const out={}, seen={};
+  for(const k of Object.keys((p&&p.days)||{})){
+    const date=k.slice(0,10); if(seen[date]) continue; seen[date]=1;
+    const b=bestFor(p,date); if(!b||!b.done) continue;
+    const w=weekOf(date); WEEKDATE[w.key]=w.days[0];
+    out[w.key]=(out[w.key]||0)+(b.score||0);
+  }
+  return out;
+}
+function weekTotal(p,wk){ const pw=playerWeeks(p); let n=0; for(const d of wk.days){ const e=bestFor(p,d); if(e&&e.done) n++; } return {s:pw[wk.key]||0,n}; }
+// Calcule le classement général, les Ricard dus et les joueurs retirés pour inactivité
+function league(){
+  WEEKDATE[S.week.key]=S.week.days[0];
+  const cur=S.week.key, prev=weekKeyBefore(cur);
+  const P2={}; for(const [uid,p] of Object.entries(S.players)){ const w=playerWeeks(p); const keys=Object.keys(w).sort(); if(keys.length) P2[uid]={w,first:keys[0]}; }
+  const allWeeks=[...new Set(Object.values(P2).flatMap(x=>Object.keys(x.w)).concat(cur))].sort();
+  const ricard={}, lastWeeks={};
+  for(const W of allWeeks){
+    if(W>=cur) continue;                       // seules les semaines terminées comptent
+    const Wb=weekKeyBefore(W);
+    const parts=Object.entries(P2).filter(([u,x])=>x.first<=W && (x.w[W]!==undefined || (Wb && x.w[Wb]!==undefined)));
+    if(parts.length<2) continue;
+    const sc=parts.map(([u,x])=>[u,x.w[W]||0]), min=Math.min(...sc.map(s=>s[1])), losers=sc.filter(s=>s[1]===min);
+    if(losers.length===parts.length) continue;  // égalité générale : personne ne paie
+    losers.forEach(([u])=>{ ricard[u]=(ricard[u]||0)+(parts.length-losers.length); (lastWeeks[u]=lastWeeks[u]||[]).push(W); });
+  }
+  const rows=[], out=[];
+  for(const [uid,x] of Object.entries(P2)){
+    const active = x.w[cur]!==undefined || (prev && x.w[prev]!==undefined);
+    const total=Object.values(x.w).reduce((s,v)=>s+v,0);
+    const r={uid,total,weeks:x.w,ricard:ricard[uid]||0,last:lastWeeks[uid]||[]};
+    (active?rows:out).push(r);
+  }
+  // un joueur inscrit cette semaine sans avoir encore joué n'apparaît pas encore
+  rows.sort((a,b)=>b.total-a.total);
+  return {rows,out,weeks:allWeeks.slice().reverse()};
+}
+function standings(mode){
+  const rows=[];
+  for(const [uid,p] of Object.entries(S.players)){
+    if(mode==="week"){ const {s,n}=weekTotal(p,S.week); if(n) rows.push({uid,s,sub:`${n} jeu${n>1?"x":""} joué${n>1?"s":""}`}); }
+    else { const e=bestFor(p,S.today); if(e&&e.done) rows.push({uid,s:e.score,sub:(GAMES[e.game||"quiz"]||GAMES.quiz).n}); }
+  }
+  return rows.sort((a,b)=>b.s-a.s);
+}
+function palmares(){
+  const weeks={};
+  for(const [uid,p] of Object.entries(S.players)) for(const [k,v] of Object.entries(playerWeeks(p))){ if(k>=S.week.key) continue; (weeks[k]=weeks[k]||{})[uid]=v; }
+  return Object.keys(weeks).sort().reverse().slice(0,8).map(k=>{ const best=Object.entries(weeks[k]).sort((a,b)=>b[1]-a[1])[0]; return {k,uid:best[0],s:best[1]}; });
+}
+const wlabel = k => "S"+parseInt(k.split("W")[1],10);
+
+// ═════════════════════════ CONTENU DU JOUR ═════════════════════════
+function quizItems(date){ // dimanche : 10 questions de la banque, tournantes
+  const order=weekSlice(Q.map((_,i)=>i),date,10,"quiz");
+  return order.map(i=>{ const [cat,q,...o]=Q[i]; return {cat,q,opts:shuffle(o.map((t,k)=>({t,ok:k===0})), rng(date+"#"+i))}; });
+}
+function legacyQuizItems(date){ // ancien format (tirage par jour de semaine)
+  const w=weekOf(date), order=shuffle(Q.map((_,i)=>i), rng("lucarne-"+w.key));
+  return order.slice(w.dow*10,w.dow*10+10).map(i=>{ const [cat,q,...o]=Q[i]; return {cat,q,opts:shuffle(o.map((t,k)=>({t,ok:k===0})), rng(date+"#"+i))}; });
+}
+function imposteurItems(date){
+  return weekSlice(IMPOSTEUR,date,5,"imp").map((r,i)=>{ const [club,imp,ok]=r;
+    return {club, cat:"Imposteur", q:`Lequel de ces joueurs n'a JAMAIS joué à ${club} ?`, opts:shuffle([{t:imp,ok:true},...ok.map(t=>({t,ok:false}))], rng(date+"imp"+i))}; });
+}
+// Parcours : 3 joueurs connus + 2 pour les aguerris → [{a:"nom|alias", nat, clubs[], expert}]
+function parcoursItems(date){
+  const stars=weekSlice(PARCOURS,date,3,"par").map(n=>{ const p=PL[n], last=norm(n).split(" ").slice(-1)[0]; return {a:n+"|"+last, nat:p.nat, clubs:p.clubs, expert:false}; });
+  const exp=weekSlice(PARCOURS_EXPERT,date,2,"parx").map(([a,nat,c])=>({a,nat,clubs:c.split(";"),expert:true}));
+  return stars.concat(exp);
+}
+// Joueur mystère : 15 fiches détaillées + une fiche générée pour chaque autre joueur de la base (~150 au total)
+const PRESTIGE=["Real Madrid","Barcelone","Bayern","Juventus","Milan AC","Inter","Manchester United","Liverpool","Chelsea","Arsenal","Manchester City","PSG","OM","Atlético","Dortmund","Ajax","Lyon","Monaco","Naples","AS Roma","Tottenham","Benfica","Porto"];
+function autoMystere(p){
+  const r=rng("mys-"+p.n), uniq=[...new Set(p.clubs)], first=p.clubs[0];
+  const top=PRESTIGE.find(c=>uniq.includes(c)&&c!==first) || (uniq.length>1?uniq[uniq.length-1]:first);
+  const middle=shuffle(uniq.filter(c=>c!==first && c!==top), r);
+  const words=p.n.split(" "), initials=words.map(w=>w[0].toUpperCase()).join(".")+".";
+  const clues=[];
+  if(uniq.length===1){
+    clues.push("A fait toute sa carrière pro dans un seul club", `Ce club : ${first}`);
+  } else {
+    clues.push(`Nombre de clubs pros dans sa carrière : ${uniq.length}`);
+    if(middle[0]) clues.push(`Passé par : ${middle[0]}`);
+    if(middle[1]) clues.push(`Passé aussi par : ${middle[1]}`);
+    clues.push(`Club de ses débuts pros : ${first}`);
+    clues.push(`${PRESTIGE.includes(top)?"Son club le plus prestigieux":"Autre club"} : ${top}`);
+  }
+  if(clues.length<5){ const ln=norm(words.length>1?words.slice(1).join(""):p.n).replace(/ /g,"").length; clues.push(`Nombre de lettres de son nom : ${ln}`); }
+  clues.push(`Ses initiales : ${initials}`);
+  const al=[p.n]; if(words.length>1){ al.push(words.slice(1).join(" ")); al.push(words[words.length-1]); }
+  return {a:[...new Set(al)].join("|"), nat:p.nat, pos:p.pos, born:`en ${p.born}`, clues:clues.slice(0,6), auto:true};
+}
+// Années 90 : uniquement les méga-stars (Ballon d'or) ; sinon années 2000 et joueurs actuels
+const MYSTERE_EXCLUS = ["Laurent Blanc","Youri Djorkaeff","Éric Cantona","Christophe Dugarry","Marcel Desailly","Didier Deschamps","Emmanuel Petit",
+  "Gabriel Batistuta","Michel Platini","Johan Cruyff","Diego Maradona","Pelé","Peter Schmeichel"].map(norm);
+const MYSTERE_ALL = (()=>{ const ex=new Set(MYSTERE_EXCLUS), done=new Set(MYSTERE.map(m=>norm(display(m.a))));
+  return MYSTERE.filter(m=>!ex.has(norm(display(m.a)))).concat(P.filter(p=>!done.has(norm(p[0]))&&!ex.has(norm(p[0]))).map(p=>autoMystere(PL[p[0]]))); })();
+const mystereTarget = date => weekSlice(MYSTERE_ALL,date,1,"mys")[0];
+const topItem = date => weekSlice(TOPS,date,1,"top")[0];
+const onzeItem = date => weekSlice(ONZES,date,1,"onze")[0];
+function pmRound(date,i){
+  const r=rng(date+"pm"+i), cat=PM[Math.floor(r()*PM.length)];
+  let a,b,guard=0; do{ a=cat.items[Math.floor(r()*cat.items.length)]; b=cat.items[Math.floor(r()*cat.items.length)]; }while((a[1]===b[1]||a[0]===b[0]) && ++guard<50);
+  return {q:cat.q, unit:cat.unit, pre:cat.pre||"", low:!!cat.low, a, b};
+}
+
+// ═════════════════════════ RENDU GÉNÉRAL ═════════════════════════
+const app=document.getElementById("app");
+function render(){
+  if(S.test && S.view==="home") return renderTest();
+  ({loading:renderLoading, pseudo:renderPseudo, home:renderHome, intro:renderIntro, play:renderPlay, result:renderResult})[S.view]();
+}
+function header(){
+  const w=S.week;
+  return `<header class="top"><div><h1 class="logo">Lucar<span>ne</span></h1><div class="sub">Le jeu foot de la semaine</div></div>
+  <div class="sub" style="text-align:right">Semaine ${w.num}<br>${nice(w.days[0])} – ${nice(w.days[6])}</div></header>`;
+}
+function renderLoading(){
+  app.innerHTML = header()+`<div class="card center"><div class="display" style="font-size:22px">Échauffement…</div>
+  <p class="note" style="margin-top:8px">${S.slow?"Le classement met du temps à arriver. Il s'affichera dès que possible.":"On récupère les scores de la bande."}</p></div>`;
+}
+function renderPseudo(){
+  app.innerHTML = header()+`<div class="card"><h2>Ton blase sur le classement</h2>
+  <p class="note">Choisis le pseudo que tes potes verront. Tu pourras le changer plus tard.</p>
+  <input class="txt" id="ps" maxlength="20" placeholder="Ex. : Le Mago" value="${esc(S.pseudoDraft || (me()&&me().pseudo) || S.names[S.uid] || "")}">
+  <button class="btn" id="go">C'est parti</button>
+  ${me()&&me().pseudo?`<div class="gap"></div><button class="btn ghost" id="cancel">Annuler</button>`:""}</div>`;
+  const ps=document.getElementById("ps"); ps.focus();
+  const go=()=>{ const v=ps.value.trim().slice(0,20); if(!v){ps.focus();return;} persist({pseudo:v}); S.view="home"; render(); };
+  document.getElementById("go").onclick=go; ps.onkeydown=e=>{ if(e.key==="Enter") go(); }; ps.oninput=()=>S.pseudoDraft=ps.value;
+  const c=document.getElementById("cancel"); if(c) c.onclick=()=>{S.view="home";render();};
+}
+function renderHome(){
+  const m=me(), w=S.week, mine=weekTotal(m,w), L=league();
+  const grank=L.rows.findIndex(r=>r.uid===S.uid)+1, myL=L.rows.find(r=>r.uid===S.uid);
+  let firstOpen=null;
+  const chips=w.days.map((d,i)=>{
+    const e=bestFor(m,d), isToday=d===S.today, future=d>S.today, g=GAMES[gameFor(d)];
+    let cls="day", s="";
+    if(e&&e.done){ cls+=" done"; s=e.score; }
+    else if(future){ cls+=" locked"; s="🔒"; }
+    else { cls+=" open"; s=e?"en cours":"à jouer"; if(!firstOpen) firstOpen=d; }
+    if(isToday) cls+=" today";
+    return `<button class="${cls}" data-d="${d}" ${future?"disabled":""} title="${esc(g.n)}">${DAYN[i]}<i>${g.e}</i><span class="s">${s}</span></button>`;
+  }).join("");
+  const tg=GAMES[gameFor(S.today)], te=bestFor(m,S.today), todayDone=te&&te.done;
+  const missed = w.days.filter(d=>d<S.today && !(bestFor(m,d)&&bestFor(m,d).done));
+  const catchup = missed.length && !S.readOnly ? `<div class="card catch"><div class="tlabel">À rattraper · ${missed.length} jeu${missed.length>1?"x":""}</div>
+    <p class="note" style="margin-bottom:10px">Pas de panique si tu as raté des jours : tu peux les jouer jusqu'à dimanche soir (lundi ${OPEN_H}h), ils comptent pour la semaine.</p>
+    ${missed.map(d=>{ const g=GAMES[gameFor(d)], e=bestFor(m,d); return `<div class="trow"><div class="temo2">${g.e}</div><div class="nm"><b>${esc(g.n)}</b><small>${DAYL[weekOf(d).dow]} ${nice(d)}${e?" · partie en cours":""}</small></div><button class="btn small" data-c="${d}">${e?"Reprendre":"Jouer"}</button></div>`; }).join("")}</div>` : "";
+  let top;
+  if(!todayDone){
+    top=`<div class="card today-card"><div class="tlabel">Aujourd'hui · ${DAYL[weekOf(S.today).dow]}</div>
+      <div class="tgame"><span class="temo">${tg.e}</span><div><div class="display tname">${esc(tg.n)}</div><p class="note">${esc(tg.d)}</p></div></div>
+      ${S.readOnly?`<button class="btn" disabled>Lecture seule</button>`:`<button class="btn" id="play" data-d="${S.today}">Jouer · ${tg.e} ${esc(tg.n)}</button>`}
+</div>`+catchup;
+  } else {
+    top=`<div class="card done-card"><div class="tlabel">Aujourd'hui · ${tg.e} ${esc(tg.n)}</div>
+      <p style="margin-bottom:10px">Fait : <b style="color:var(--yellow)">${te.score} pts</b> · <a href="#" id="seetoday" style="color:var(--chalk)">voir ma partie</a></p></div>`+catchup+teaser();
+  }
+  let board;
+  if(S.board==="general"){
+    board = L.rows.length ? L.rows.map((r,i)=>`<div class="lrow ${r.uid===S.uid?"mine":""}">
+        <div class="lmain"><div class="rk">${i===0?"🏆":i+1}</div><div class="nm">${esc(nameOf(r.uid))}${r.ricard?` <span class="ricard" title="Ricard dus aux autres joueurs">🥃 ${r.ricard}</span>`:""}</div><div class="sc">${r.total}</div></div>
+        <div class="wks">${L.weeks.filter(k=>r.weeks[k]!==undefined||k===S.week.key).map(k=>`<span class="wk ${k===S.week.key?"cur":""} ${r.last.includes(k)?"lastw":""}">${wlabel(k)}${k===S.week.key?" (en cours)":""} · <b>${r.weeks[k]||0}</b>${r.last.includes(k)?" 🥃":""}</span>`).join("")}</div></div>`).join("")
+      : `<div class="empty">Le classement se remplit dès la première partie.</div>`;
+    if(L.out.length) board+=`<p class="note" style="margin-top:10px">Retiré${L.out.length>1?"s":""} pour inactivité (2 semaines sans jouer) : ${L.out.map(r=>esc(nameOf(r.uid))).join(", ")}. Une partie suffit pour revenir.</p>`;
+  } else if(S.board==="week"){
+    const ids=new Set(L.rows.map(r=>r.uid)); standings("week").forEach(r=>ids.add(r.uid));
+    const list=[...ids].map(uid=>{ const {s,n}=weekTotal(S.players[uid],S.week); return {uid,s,n}; }).sort((a,b)=>b.s-a.s);
+    const min=list.length?Math.min(...list.map(r=>r.s)):0, losers=list.filter(r=>r.s===min), stake=list.length-losers.length;
+    const riskOn = list.length>=2 && stake>0;
+    board = list.length ? list.map((r,i)=>{ const lost=riskOn&&r.s===min;
+        return `<div class="row ${i===0&&r.s>min?"r1":""} ${r.uid===S.uid?"mine":""} ${lost?"lanterne":""}"><div class="rk">${i===0&&r.s>min?"🏆":lost?"🥃":i+1}</div>
+        <div class="nm">${esc(nameOf(r.uid))}<small>${lost?`Lanterne rouge : doit ${stake} Ricard${stake>1?"s":""} si ça reste comme ça dimanche`:`${r.n} jeu${r.n>1?"x":""} joué${r.n>1?"s":""} sur 7`}</small></div><div class="sc">${r.s}</div></div>`; }).join("")
+      : `<div class="empty">Personne n'a encore joué cette semaine. Ouvre le bal !</div>`;
+    board += `<p class="note" style="margin-top:10px">${list.length<2?"🥃 Il faut au moins 2 joueurs pour qu'un Ricard soit en jeu : invite tes potes !":`🥃 En jeu cette semaine : le dernier dimanche soir (lundi ${OPEN_H}h) paiera un Ricard à chacun des ${list.length-1} autres.`} Un joueur qui ne joue pas compte pour 0.</p>`;
+  } else {
+    const list=standings(S.board);
+    board = list.length ? list.map((r,i)=>`<div class="row ${i===0?"r1":""} ${r.uid===S.uid?"mine":""}"><div class="rk">${i===0?"🏆":i+1}</div><div class="nm">${esc(nameOf(r.uid))}<small>${esc(r.sub)}</small></div><div class="sc">${r.s}</div></div>`).join("")
+      : `<div class="empty">${S.board==="week"?"Personne n'a encore joué cette semaine. Ouvre le bal !":"Personne n'a encore joué aujourd'hui."}</div>`;
+  }
+  const palm=palmares();
+  const owed=L.rows.concat(L.out).filter(r=>r.ricard>0).sort((a,b)=>b.ricard-a.ricard);
+  const ardoise=`<div class="card ardoise"><h2>🥃 L'ardoise des Ricard</h2>${owed.length?owed.map(r=>`<div class="row"><div class="rk">🥃</div><div class="nm">${esc(nameOf(r.uid))}<small>Dernier en ${r.last.map(wlabel).join(", ")}</small></div><div class="sc">${r.ricard}</div></div>`).join("")
+    :`<div class="empty">Personne ne doit de Ricard pour l'instant. Verdict à la fin de la semaine !</div>`}</div>`;
+  app.innerHTML = header()
+  + (S.err?`<div class="warn">${esc(S.err)}</div>`:"")
+  + (S.solo?`<div class="warn">Mode solo : le classement partagé n'est pas disponible ici, tes scores ne seront pas enregistrés.</div>`:"")
+  + top
+  + `<div class="card">
+      <div class="me"><div><div class="lbl">${m&&m.pseudo?esc(m.pseudo):"Toi"} ${S.solo?"":`· <a href="#" id="rename" style="color:var(--muted)">modifier</a>`}${typeof showCode==="function"?` · <a href="#" id="mycodeL" style="color:var(--muted)">mon code joueur</a>`:""}</div>
+      <div class="pts">${mine.s} <span style="font-size:18px;color:var(--chalk)">pts cette semaine</span></div>
+      <div class="lbl" style="margin-top:4px">Total : ${myL?myL.total:0} pts${myL&&myL.ricard?` · 🥃 ${myL.ricard} Ricard à payer`:""}</div></div>
+      <div style="text-align:right"><div class="lbl">Général</div><div class="pts" style="color:var(--chalk)">${grank?grank+(grank===1?"er":"e"):"–"}</div></div></div>
+      <div class="days">${chips}</div>
+    </div>
+    <div class="card"><div class="tabs"><button class="tab ${S.board==="week"?"on":""}" data-b="week">Semaine</button><button class="tab ${S.board==="general"?"on":""}" data-b="general">Général</button><button class="tab ${S.board==="today"?"on":""}" data-b="today">Aujourd'hui</button></div>${board}</div>
+    ${ardoise}
+    ${palm.length?`<div class="card palm"><h2>Palmarès</h2>${palm.map(p=>`<div class="row"><div class="rk">🏆</div><div class="nm">${esc(nameOf(p.uid))}<small>Semaine ${parseInt(p.k.split("W")[1],10)} · ${p.k.slice(0,4)}</small></div><div class="sc">${p.s} pts</div></div>`).join("")}</div>`:""}
+    ${S.isOwner||S.solo?`<button class="btn ghost" id="testmode" style="margin-bottom:14px">🧪 Mode test (organisateur)</button>`:""}
+    <div class="card"><h2>Le programme</h2>${SCHEDULE.map((g,i)=>`<div class="prog"><b>${DAYN[i]}</b><span>${GAMES[g].e} ${esc(GAMES[g].n)}</span></div>`).join("")}
+    <p class="note" style="margin-top:10px">Un nouveau jeu chaque matin à ${OPEN_H}h, mêmes défis pour tout le monde, jusqu'à ${MAXPTS} points par jeu. Tu peux rattraper les jours manqués de la semaine en cours.</p>
+    <p class="note" style="margin-top:8px">🏆 Le classement général cumule toutes les semaines. 🥃 Chaque fin de semaine, le dernier doit un Ricard à chacun des autres joueurs (un joueur qui n'a pas joué de la semaine compte pour 0). 🚪 Deux semaines sans jouer et tu es retiré du classement. Une partie suffit pour revenir.</p></div>`;
+  app.querySelectorAll(".day.done").forEach(b=>b.onclick=()=>openResult(b.dataset.d));
+  app.querySelectorAll(".day.open").forEach(b=>b.onclick=()=>{ if(!S.readOnly) openIntro(b.dataset.d); });
+  app.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{ S.board=b.dataset.b; render(); });
+  const p1=document.getElementById("play"); if(p1) p1.onclick=()=>openIntro(p1.dataset.d);
+  app.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>openIntro(b.dataset.c));
+  const st=document.getElementById("seetoday"); if(st) st.onclick=e=>{e.preventDefault(); openResult(S.today);};
+  const rn=document.getElementById("rename"); if(rn) rn.onclick=e=>{e.preventDefault(); S.pseudoDraft=""; S.view="pseudo"; render();};
+  const mc=document.getElementById("mycodeL"); if(mc) mc.onclick=e=>{e.preventDefault(); showCode();};
+  const tm=document.getElementById("testmode"); if(tm) tm.onclick=()=>{ S.test=true; testBox={pseudo:"Test",days:{}}; render(); window.scrollTo(0,0); };
+}
+// Mode test : tous les jeux de la semaine, jours futurs compris, rejouables, sans enregistrement
+function renderTest(){
+  const w=S.week;
+  app.innerHTML = header()+`<div class="warn" style="background:rgba(255,210,63,.12);border-color:rgba(255,210,63,.5);color:var(--chalk)">🧪 <b>Mode test</b> — rien n'est enregistré, le classement n'est pas touché. Tu peux tout rejouer autant que tu veux.</div>
+    <div class="card"><h2>Tester un jeu</h2>${w.days.map((d,i)=>{ const g=GAMES[gameFor(d)], e=bestFor(testBox,d);
+      return `<div class="trow"><div class="temo2">${g.e}</div><div class="nm"><b>${esc(g.n)}</b><small>${DAYL[i]} ${nice(d)}${e&&e.done?` · testé : ${e.score} pts`:""}</small></div>
+        <button class="btn small" data-d="${d}">${e&&e.done?"Rejouer":"Jouer"}</button></div>`; }).join("")}
+      <div class="gap"></div><p class="note">Pour voir d'autres contenus (semaine prochaine, etc.), change de semaine :</p>
+      <div class="row2" style="margin-top:8px"><button class="btn ghost" id="wprev">‹ Semaine ${weekOf(fmt(new Date(parse(w.days[0]).getTime()-7*864e5))).num}</button><button class="btn ghost" id="wnext">Semaine ${weekOf(fmt(new Date(parse(w.days[0]).getTime()+7*864e5))).num} ›</button></div>
+      <div class="gap"></div><p class="note">Aperçu du compte à rebours affiché après une partie :</p></div>${teaser()}
+    <button class="btn ghost" id="pvw" style="margin-bottom:10px">Aperçu du pop-up « semaine complète »</button>
+    <button class="btn" id="quit">Quitter le mode test</button>`;
+  app.querySelectorAll(".trow .btn").forEach(b=>b.onclick=()=>{ const d=b.dataset.d; delete testBox.days[keyFor(d)]; openIntro(d); });
+  const shift=n=>{ S.week=weekOf(fmt(new Date(parse(S.week.days[0]).getTime()+n*7*864e5))); render(); };
+  document.getElementById("wprev").onclick=()=>shift(-1);
+  document.getElementById("wnext").onclick=()=>shift(1);
+  document.getElementById("pvw").onclick=()=>showFullWeek(S.week);
+  document.getElementById("quit").onclick=()=>{ S.test=false; S.week=weekOf(S.today); S.view="home"; render(); window.scrollTo(0,0); };
+}
+function openResult(date){ S.recapKey=date; S.view="result"; render(); window.scrollTo(0,0); }
+function openIntro(date){
+  if(date>S.today && !S.test) return;
+  const e=bestFor(me(),date); if(e&&e.done) return openResult(date);
+  if(entryFor(me(),date)) return startGame(date); // partie en cours : on reprend directement
+  S.introDate=date; S.view="intro"; render(); window.scrollTo(0,0);
+}
+function renderIntro(){
+  const d=S.introDate, g=GAMES[gameFor(d)];
+  app.innerHTML = header()+`<div class="card center"><div style="font-size:56px">${g.e}</div><div class="display" style="font-size:34px">${esc(g.n)}</div>
+  <div class="sub" style="margin:4px 0 14px">${d===S.today?"Défi du jour":"Défi de "+DAYL[weekOf(d).dow]+" "+nice(d)}</div>
+  <p style="font-size:16px;line-height:1.45;margin-bottom:10px">${esc(g.d)}</p><p class="note" style="margin-bottom:18px">${esc(g.r)}</p>
+  <button class="btn" id="go">Coup d'envoi</button><div class="gap"></div><button class="btn ghost" id="back">Retour</button></div>`;
+  document.getElementById("go").onclick=()=>startGame(d);
+  document.getElementById("back").onclick=()=>{S.view="home";render();};
+}
+
+// ═════════════════════════ MOTEUR DE PARTIE ═════════════════════════
+function startGame(date){
+  const game=gameFor(date), key=keyFor(date), prev=entryFor(me(),date);
+  const e = prev ? JSON.parse(JSON.stringify(prev)) : {week:weekOf(date).key, game, score:0, done:false, st:G[game].init(date)};
+  S.play={date, game, key, e, data:G[game].data(date)};
+  S.view="play";
+  if(!prev) save();
+  G[game].resume && G[game].resume();
+  render(); window.scrollTo(0,0);
+}
+function finishGame(){ const z=S.play; z.e.done=true; z.e.finishedAt=Date.now(); save(); S.play=null; openResult(z.date); checkFullWeek(z.date); }
+// Semaine complète (7 jeux sur 7) : pop-up de félicitations, une fois par semaine
+function checkFullWeek(date){
+  const m=me(), wk=weekOf(date);
+  const n=wk.days.filter(d=>{ const e=bestFor(m,d); return e&&e.done; }).length;
+  if(n<7) return;
+  if(!S.test){ if(m&&m.fullWeeks&&m.fullWeeks[wk.key]) return; persist({fullWeeks:{[wk.key]:true}}); }
+  setTimeout(()=>showFullWeek(wk), 500);
+}
+function showFullWeek(wk){
+  const m=me(), name=(m&&m.pseudo)||"champion";
+  const tot=weekTotal(m,wk).s;
+  const conf=[...Array(36)].map((_,i)=>`<i style="left:${(i*37)%100}%;animation-delay:${(i%9)*.18}s;background:${i%2?"#E2001A":"#1C2A54"}"></i>`).join("");
+  const ov=document.createElement("div"); ov.className="modal";
+  ov.innerHTML=`<div class="confetti">${conf}</div><div class="mbox">
+    <div class="mbadge">7/7</div>
+    <div class="display" style="font-size:34px;line-height:1">Semaine complète !</div>
+    <p class="mtxt">Bravo <b>${esc(name)}</b> : tu as joué aux 7 jeux de la semaine ${wk.num}, sans en lâcher un seul. <b>${tot} pts</b> au compteur.</p>
+    <div class="losc"><div class="lbar"></div><p>Et comme chaque semaine, petit rappel amical à toute la bande :</p>
+      <div class="display lbig">Cette semaine encore, le LOSC est le plus grand club de France.</div></div>
+    <button class="btn" id="mclose">Allez le LOSC !</button></div>`;
+  document.body.appendChild(ov);
+  ov.querySelector("#mclose").onclick=()=>ov.remove();
+}
+function renderPlay(){ G[S.play.game].render(); }
+function playHead(extra=""){
+  const z=S.play, g=GAMES[z.game];
+  return `<div class="qhead"><span>${g.e} ${esc(g.n)}${extra?" · "+extra:""}</span><span class="score">${z.e.score||0}</span></div>`;
+}
+function renderResult(){
+  const date=S.recapKey, m=me(), e=bestFor(m,date);
+  if(!e){ S.view="home"; return render(); }
+  const game=e.game||"quiz", g=GAMES[game];
+  const dayRows=[]; for(const [uid,p] of Object.entries(S.players)){ const x=bestFor(p,date); if(x&&x.done) dayRows.push({uid,s:x.score}); }
+  dayRows.sort((a,b)=>b.s-a.s); const r=dayRows.findIndex(x=>x.uid===S.uid)+1;
+  const ratio=e.score/MAXPTS;
+  const comment = ratio>=.85?"Ballon d'or !":ratio>=.65?"Titulaire indiscutable.":ratio>=.45?"Correct, mais le coach attend mieux.":ratio>=.2?"Retour au centre de formation…":"Carton rouge.";
+  const body = e.game ? G[game].recap(date,e) : G.quiz.recap(date,{st:{answers:e.answers}},true);
+  app.innerHTML = header()+`<div class="card center">
+    <div class="sub">${g.e} ${esc(g.n)} · ${date===S.today?"aujourd'hui":DAYL[weekOf(date).dow]+" "+nice(date)}</div>
+    <div class="big">${e.score}</div><div class="display" style="font-size:22px;margin-top:6px">${comment}</div>
+    ${!S.solo&&r?`<p class="note" style="margin-top:8px">${r}${r===1?"er":"e"} sur ${dayRows.length} joueur${dayRows.length>1?"s":""} ce jour-là</p>`:""}
+    <div class="gap"></div><button class="btn" id="back">Voir le classement</button></div>
+    ${teaser()}
+    <div class="card recap"><h2>Correction</h2>${body}</div>`;
+  document.getElementById("back").onclick=()=>{ S.view="home"; render(); window.scrollTo(0,0); };
+  if(S.test) document.getElementById("back").textContent="Retour au mode test";
+}
+
+// Champ texte avec suggestions
+function acField(ph){ return `<div class="ac"><input class="txt" id="ac" placeholder="${esc(ph)}" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="sugg" id="sugg"></div></div>`; }
+function bindAc(pool, onSubmit, opts={}){
+  const inp=document.getElementById("ac"), box=document.getElementById("sugg"); if(!inp) return;
+  let items=[], sel=-1;
+  const draw=()=>{ box.innerHTML=items.map((n,i)=>`<div class="sg ${i===sel?"on":""}" data-i="${i}">${opts.label?opts.label(n):esc(n)}</div>`).join(""); box.style.display=items.length?"block":"none";
+    box.querySelectorAll(".sg").forEach(el=>el.onmousedown=ev=>{ ev.preventDefault(); pick(items[+el.dataset.i]); }); };
+  const pick=n=>{ inp.value=""; items=[]; draw(); onSubmit(n,true); };
+  inp.oninput=()=>{ const q=norm(inp.value); sel=-1;
+    items = q.length<2||!pool.length ? [] : pool.filter(n=>{ const nn=norm(n); return nn.startsWith(q)||nn.includes(" "+q)||(q.length>=3&&nn.includes(q)); }).slice(0,6);
+    draw(); };
+  inp.onkeydown=ev=>{
+    if(ev.key==="ArrowDown"){ sel=Math.min(items.length-1,sel+1); draw(); ev.preventDefault(); }
+    else if(ev.key==="ArrowUp"){ sel=Math.max(-1,sel-1); draw(); ev.preventDefault(); }
+    else if(ev.key==="Enter"){ ev.preventDefault();
+      if(sel>=0) return pick(items[sel]);
+      if(opts.strict){ if(items.length===1) return pick(items[0]); const ex=pool.find(n=>norm(n)===norm(inp.value)); if(ex) return pick(ex); flash("Choisis un joueur dans la liste","bad"); return; }
+      const v=inp.value.trim(); if(v){ inp.value=""; items=[]; draw(); onSubmit(v,false); } }
+  };
+  if(!opts.noFocus) setTimeout(()=>inp.focus(),30);
+}
+function flash(msg,kind){ const f=document.getElementById("flash"); if(f){ f.innerHTML=`<span class="${kind||""}">${esc(msg)}</span>`; clearTimeout(flash._t); flash._t=setTimeout(()=>{ if(f.isConnected) f.innerHTML=""; },2200);} }
+const hearts = n => "❤️".repeat(Math.max(0,n))+"🖤".repeat(Math.max(0,3-n));
+
+// ═════════════════════════ LES JEUX ═════════════════════════
+const G = {};
+
+// ── Questions chronométrées (quiz + imposteur) ──
+function mcqGame(builder, base, bonus, n, opts={}){
+  const T=20000; let raf=null, qStart=0, locked=false;
+  const g = {
+    init:()=>({shown:0, answers:[]}),
+    data:builder,
+    resume(){ const st=S.play.e.st; while(st.answers.length<st.shown && st.answers.length<n) st.answers.push({c:false,p:0,k:-1}); },
+    render(){
+      const z=S.play, st=z.e.st, idx=st.answers.length;
+      if(idx>=n) return finishGame();
+      if(st.shown<idx+1){ st.shown=idx+1; save(); }
+      const q=z.data[idx];
+      const dots=[...Array(n)].map((_,i)=>{ const a=st.answers[i]; return `<i class="${a?(a.c?"ok":"ko"):(i===idx?"cur":"")}"></i>`; }).join("");
+      app.innerHTML = playHead(`${idx+1}/${n}`)+`<div class="dots">${dots}</div><div class="timer"><div id="tbar"></div></div>
+        <div class="card">${q.club?`<div class="center" style="margin-bottom:10px">${clubChip(q.club,60)}</div>`:`<span class="cat">${esc(q.cat)}</span>`}
+        <div class="q">${esc(q.q)}</div>
+        <div class="opts">${q.opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o.t)}</button>`).join("")}</div><div class="flash" id="flash"></div></div>`;
+      app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(+b.dataset.i));
+      locked=false; qStart=performance.now(); cancelAnimationFrame(raf); tick();
+    },
+    recap(date,e,legacy){
+      const qs = legacy ? legacyQuizItems(date) : builder(date);
+      return qs.slice(0,n).map((q,i)=>{ const a=(e.st.answers||[])[i]||{k:-1,c:false}; const right=q.opts.find(o=>o.ok).t;
+        return `<div class="it"><b>${i+1}. ${esc(q.q)}</b>${a.c?`<span class="good">✓ ${esc(right)}</span> · +${a.p}`:`<span class="bad">✗ ${a.k>=0?esc(q.opts[a.k].t):"pas de réponse"}</span> — ${opts.okLabel||"bonne réponse"} : <span class="good">${esc(right)}</span>`}</div>`; }).join("");
+    }
+  };
+  function tick(){
+    const bar=document.getElementById("tbar"); if(!bar) return;
+    const left=Math.max(0,T-(performance.now()-qStart));
+    bar.style.transform=`scaleX(${left/T})`; bar.style.background=left<5000?"var(--red)":"var(--yellow)";
+    if(left<=0) return answer(-1);
+    raf=requestAnimationFrame(tick);
+  }
+  function answer(k){
+    if(locked) return; locked=true; cancelAnimationFrame(raf);
+    const z=S.play, st=z.e.st, q=z.data[st.answers.length];
+    const left=Math.max(0,T-(performance.now()-qStart)), ok=k>=0&&q.opts[k].ok, p=ok?base+Math.round(bonus*left/T):0;
+    st.answers.push({c:ok,p,k}); z.e.score=(z.e.score||0)+p; save();
+    app.querySelectorAll(".opt").forEach((b,i)=>{ b.disabled=true; if(q.opts[i].ok) b.classList.add("ok"); else if(i===k) b.classList.add("ko"); });
+    document.getElementById("flash").innerHTML = ok?`<span class="good">But ! +${p}</span>`:`<span class="bad">${k<0?"Temps écoulé":"Raté"}</span>`;
+    app.querySelector(".score").textContent=z.e.score;
+    setTimeout(()=>{ if(S.view==="play") g.render(); }, ok?1100:1700);
+  }
+  return g;
+}
+G.quiz = mcqGame(quizItems,100,50,10);
+G.imposteur = mcqGame(imposteurItems,200,100,5,{okLabel:"l'imposteur était"});
+
+// ── Parcours (saisie libre, petite marge d'erreur) ──
+G.parcours = {
+  init:()=>({i:0, r:1, wrong:[], res:[]}),
+  data:parcoursItems,
+  render(){
+    const z=S.play, st=z.e.st;
+    if(st.res.length>=5 && !st.show) return finishGame();
+    const it=z.data[st.i], name=display(it.a), clubs=it.clubs;
+    const dots=[...Array(5)].map((_,i)=>{ const r=st.res[i]; return `<i class="${r?(r.ok?"ok":"ko"):(i===st.i?"cur":"")}"></i>`; }).join("");
+    const shown = st.show ? clubs.length : st.r;
+    const path = clubs.map((c,i)=> i<shown ? clubChip(c) : `<div class="club hidden"><div class="qmark">?</div><span>&nbsp;</span></div>`).join(`<div class="arrow">›</div>`);
+    const pts=Math.max(100,300-40*(st.r-1));
+    let bottom;
+    if(st.show){ const r=st.res[st.res.length-1];
+      bottom=`<div class="reveal ${r.ok?"ok":"ko"}"><div class="display" style="font-size:26px">${r.ok?"Trouvé ! +"+r.p:"Raté…"}</div><div>C'était <b>${esc(name)}</b> ${NAT[it.nat][1]}</div></div>
+        <button class="btn" id="next">${st.res.length>=5?"Voir mon score":"Joueur suivant"}</button>`; }
+    else bottom = `<input class="txt" id="pin" placeholder="Tape le nom du joueur puis Entrée" autocomplete="off" autocapitalize="off" spellcheck="false" style="margin:0 0 10px">
+        <button class="btn" id="ok" style="margin-bottom:8px">Valider</button>
+        <div class="row2"><button class="btn ghost" id="hint" ${st.r>=clubs.length?"disabled":""}>Club suivant</button><button class="btn ghost" id="skip">Je passe</button></div>
+        ${st.wrong.length?`<div class="wrong">${st.wrong.map(w=>`<span>✗ ${esc(w)}</span>`).join("")}</div>`:""}<div class="flash" id="flash"></div>`;
+    app.innerHTML = playHead(`joueur ${Math.min(st.i+1,5)}/5`)+`<div class="dots">${dots}</div>
+      <div class="card">${it.expert?`<span class="lvl">Pour les aguerris</span>`:`<span class="lvl easy">Classique</span>`}
+      <div class="note" style="margin:8px 0 10px">${clubs.length} clubs dans sa carrière${st.show?"":` · cette réponse vaut <b style="color:var(--yellow)">${pts} pts</b>`}</div>
+      <div class="path">${path}</div></div><div class="card">${bottom}</div>`;
+    if(st.show){ document.getElementById("next").onclick=()=>{ st.show=false; st.i++; st.r=1; st.wrong=[]; save(); G.parcours.render(); }; return; }
+    const inp=document.getElementById("pin"); setTimeout(()=>inp.focus(),30);
+    const submit=()=>{ const v=inp.value.trim(); if(!v) return; inp.value="";
+      if(matchItem(v,[it.a])===0) return end(true);
+      st.wrong.push(v);
+      if(st.r<clubs.length){ st.r++; save(); G.parcours.render(); flash("Non ! Club suivant dévoilé","bad"); }
+      else end(false); };
+    inp.onkeydown=ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); submit(); } };
+    document.getElementById("ok").onclick=submit;
+    document.getElementById("hint").onclick=()=>{ if(st.r<clubs.length){ st.r++; save(); G.parcours.render(); } };
+    document.getElementById("skip").onclick=()=>end(false);
+    function end(ok){ const p=ok?pts:0; st.res.push({ok,p,r:st.r}); z.e.score+=p; st.show=true; save(); G.parcours.render(); }
+  },
+  recap(date,e){
+    return parcoursItems(date).map((it,i)=>{ const r=(e.st.res||[])[i]||{ok:false,p:0,r:0};
+      return `<div class="it"><b>${r.ok?`<span class="good">✓</span>`:`<span class="bad">✗</span>`} ${esc(display(it.a))} ${NAT[it.nat][1]} ${it.expert?`<small class="note">(aguerris)</small>`:""} ${r.ok?`· +${r.p} (${r.r} club${r.r>1?"s":""})`:""}</b><span class="note">${it.clubs.map(esc).join(" › ")}</span></div>`; }).join("");
+  }
+};
+
+// ── Joueur mystère (3 indices de départ + indices progressifs, saisie libre) ──
+G.mystere = {
+  init:()=>({shown:0, guesses:[], won:false}),
+  data:mystereTarget,
+  render(){
+    const z=S.play, st=z.e.st, t=z.data, N=t.clues.length;
+    const over = st.won || st.lost || st.gaveUp;
+    const pts = Math.max(300, MAXPTS-200*st.shown);
+    const base=`<div class="mbase"><div><span>Nationalité</span><b>${NAT[t.nat][1]} ${esc(NAT[t.nat][0])}</b></div><div><span>Poste</span><b>${esc(POS[t.pos])}</b></div><div><span>Né ${t.auto?"":"le"}</span><b>${esc(t.auto?t.born.replace("en ",""):t.born)}</b></div></div>`;
+    const clues=t.clues.map((c,i)=> i<st.shown||over ? `<div class="clue ${i<st.shown?"":"late"}"><span>${i+1}</span>${esc(c)}</div>` : `<div class="clue locked"><span>${i+1}</span>Indice verrouillé</div>`).join("");
+    let bottom;
+    if(over) bottom=`<div class="reveal ${st.won?"ok":"ko"}"><div class="display" style="font-size:26px">${st.won?"Trouvé ! +"+z.e.score:"Raté !"}</div><div>Le joueur mystère : <b>${esc(display(t.a))}</b></div></div><button class="btn" id="fin">Voir mon score</button>`;
+    else bottom=`<input class="txt" id="pin" placeholder="Qui est-ce ? Tape un nom puis Entrée" autocomplete="off" autocapitalize="off" spellcheck="false" style="margin:0 0 10px">
+      <button class="btn" id="ok" style="margin-bottom:8px">Valider</button>
+      <div class="row2"><button class="btn ghost" id="hint" ${st.shown>=N?"disabled":""}>Indice suivant (−200)</button><button class="btn ghost small" id="give">Abandonner</button></div>
+      <p class="note">Ta réponse vaut <b style="color:var(--yellow)">${pts} pts</b>. Une mauvaise réponse dévoile l'indice suivant${st.shown>=N?" — dernière chance !":"."}</p>
+      ${st.guesses.length?`<div class="wrong">${st.guesses.map(w=>`<span>✗ ${esc(w)}</span>`).join("")}</div>`:""}<div class="flash" id="flash"></div>`;
+    app.innerHTML = playHead(`${st.shown}/${N} indices`)+`<div class="card">${base}<div class="clues">${clues}</div></div><div class="card">${bottom}</div>`;
+    if(over){ document.getElementById("fin").onclick=finishGame; return; }
+    const inp=document.getElementById("pin"); setTimeout(()=>inp.focus(),30);
+    const submit=()=>{ const v=inp.value.trim(); if(!v) return; inp.value="";
+      if(matchItem(v,[t.a])===0){ st.won=true; z.e.score=pts; save(); return G.mystere.render(); }
+      st.guesses.push(v);
+      if(st.shown<N){ st.shown++; save(); G.mystere.render(); flash("Non ! Nouvel indice dévoilé","bad"); }
+      else { st.lost=true; save(); G.mystere.render(); } };
+    inp.onkeydown=ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); submit(); } };
+    document.getElementById("ok").onclick=submit;
+    document.getElementById("hint").onclick=()=>{ if(st.shown<N){ st.shown++; save(); G.mystere.render(); } };
+    document.getElementById("give").onclick=()=>{ st.gaveUp=true; save(); G.mystere.render(); };
+  },
+  recap(date,e){ const t=mystereTarget(date);
+    return `<div class="it"><b>Le joueur mystère : ${esc(display(t.a))} ${NAT[t.nat][1]}</b><span class="note">${esc(POS[t.pos])} · né ${t.auto?"":"le "}${esc(t.born)}</span></div>`
+      + t.clues.map((c,i)=>`<div class="it note">${i<(e.st.shown||0)?"🔓":"🔒"} ${esc(c)}</div>`).join("")
+      + `<div class="it"><b>Tes essais ratés</b>${(e.st.guesses||[]).map(esc).join(", ")||"aucun"}</div>`; }
+};
+
+// ── Liste à compléter (Top liste + Onze manquant) ──
+function listGame(getItem, kind){
+  const answersOf = it => kind==="onze" ? it.slots.map(s=>s[3]) : it.items.map(x=>x.a);
+  const g = {
+    init:()=>({found:[], wrong:[], lives:3}),
+    data:getItem,
+    render(){
+      const z=S.play, st=z.e.st, it=z.data, ans=answersOf(it), N=ans.length;
+      const over = st.found.length>=N || st.lives<=0 || st.gaveUp;
+      let board;
+      if(kind==="onze"){
+        board=`<div class="pitch"><div class="pl c"></div><div class="pl b1"></div><div class="pl b2"></div>${it.slots.map((s,i)=>{ const f=st.found.includes(i);
+          const surname=display(s[3]).split(" ").slice(-1)[0];
+          return `<div class="slot ${f?"f":over?"miss":""}" style="left:${s[1]}%;top:${s[2]}%"><div class="shirt">${s[0]}</div><span>${f||over?esc(surname):"?"}</span></div>`; }).join("")}</div>`;
+      } else {
+        board=`<div class="tlist">${it.items.map((x,i)=>{ const f=st.found.includes(i);
+          return `<div class="titem ${f?"f":over?"miss":""}"><span class="tl">${esc(x.l)}</span><span>${f||over?esc(display(x.a)):"—"}</span></div>`; }).join("")}</div>`;
+      }
+      const ph = kind==="onze" ? "Tape un titulaire…" : kind==="top"&&it.kind==="pays" ? "Tape un pays…" : it.kind==="clubs" ? "Tape un club…" : "Tape un joueur…";
+      const bottom = over
+        ? `<div class="reveal ${st.found.length>=N?"ok":"ko"}"><div class="display" style="font-size:24px">${st.found.length}/${N} trouvés · +${z.e.score}</div></div><button class="btn" id="fin">Voir mon score</button>`
+        : acField(ph)+`<div class="row2"><span>${hearts(st.lives)}</span><button class="btn ghost small" id="give">J'arrête là</button></div>
+          ${st.wrong.length?`<div class="wrong">${st.wrong.map(w=>`<span>✗ ${esc(w)}</span>`).join("")}</div>`:""}<div class="flash" id="flash"></div>`;
+      app.innerHTML = playHead(`${st.found.length}/${N}`)+`<div class="card"><div class="display" style="font-size:22px;line-height:1.15">${esc(it.t)}</div>
+        ${it.s?`<div class="note" style="margin-top:4px">${esc(it.s)} · compo de ${esc(it.team)}</div>`:""}</div>
+        <div class="card">${bottom}</div><div class="card">${board}</div>`;
+      if(over){ document.getElementById("fin").onclick=finishGame; return; }
+      const pool = it.kind==="joueurs" ? PNAMES : [];
+      bindAc(pool, v=>{
+        const rest = ans.map((a,i)=>st.found.includes(i)?null:a);
+        const i = matchItem(v, rest.map(a=>a||"\u0000"));
+        if(i>=0 && rest[i]){ st.found.push(i); z.e.score=Math.round(MAXPTS*st.found.length/N); save(); g.render(); flash("✓ "+display(ans[i]),"good"); return; }
+        if(matchItem(v, ans)>=0){ flash("Déjà trouvé !",""); return; }
+        st.wrong.push(v); st.lives--; save(); g.render(); flash(st.lives>0?"Non ! Il te reste "+st.lives+" vie"+(st.lives>1?"s":""):"Plus de vies…","bad");
+      }, {});
+      document.getElementById("give").onclick=()=>{ st.gaveUp=true; save(); g.render(); };
+    },
+    recap(date,e){
+      const it=getItem(date), ans=answersOf(it), f=e.st.found||[];
+      const head=`<div class="it"><b>${esc(it.t)}</b>${it.s?`<span class="note">${esc(it.s)}</span>`:""}</div>`;
+      return head+ans.map((a,i)=>`<div class="it">${f.includes(i)?`<span class="good">✓</span>`:`<span class="bad">✗</span>`} ${kind==="onze"?`<span class="note">${it.slots[i][0]}</span> `:`<span class="note">${esc(it.items[i].l)}</span> · `}${esc(display(a))}</div>`).join("")
+        +((e.st.wrong||[]).length?`<div class="it note">Erreurs : ${e.st.wrong.map(esc).join(", ")}</div>`:"");
+    }
+  };
+  return g;
+}
+G.top = listGame(topItem,"top");
+G.onze = listGame(onzeItem,"onze");
+
+// ── Plus ou moins ──
+G.plusmoins = {
+  init:()=>({rounds:[], over:false}),
+  data:()=>null,
+  render(){
+    const z=S.play, st=z.e.st, i=st.rounds.length;
+    if(!st.over && i>=15) st.over=true;
+    if(st.over && !st.reveal){
+      app.innerHTML = playHead(`série de ${st.rounds.filter(r=>r.ok).length}`)+`<div class="card center"><div class="display" style="font-size:28px">${st.rounds.every(r=>r.ok)?"Sans-faute !":"Fin de la série"}</div>
+        <p class="note" style="margin:8px 0 16px">${st.rounds.filter(r=>r.ok).length} bonne${st.rounds.filter(r=>r.ok).length>1?"s":""} réponse${st.rounds.filter(r=>r.ok).length>1?"s":""} d'affilée</p><button class="btn" id="fin">Voir mon score</button></div>`;
+      document.getElementById("fin").onclick=finishGame; return;
+    }
+    const idx = st.reveal ? i-1 : i;
+    const R=pmRound(z.date,idx), last=st.reveal?st.rounds[idx]:null;
+    const card=(x,side)=>{ const win = R.low ? x[1]<(side==="a"?R.b:R.a)[1] : x[1]>(side==="a"?R.b:R.a)[1];
+      const cls = last ? (win?"win":"lose")+(last.pick===side?" picked":"") : "";
+      const isClub=R.unit==="fondé en";
+      return `<button class="pmcard ${cls}" data-s="${side}" ${last?"disabled":""}>${isClub?badge(x[0],56):""}<div class="pmname">${esc(x[0])}</div>
+        <div class="pmval">${last?`${R.pre?esc(R.pre):""}<b>${x[1]}</b>${R.pre?"":" "+esc(R.unit)}`:"?"}</div></button>`; };
+    const dots=[...Array(15)].map((_,k)=>{ const r=st.rounds[k]; return `<i class="${r?(r.ok?"ok":"ko"):(k===idx?"cur":"")}"></i>`; }).join("");
+    app.innerHTML = playHead(`duel ${idx+1}/15`)+`<div class="dots">${dots}</div><div class="card"><div class="q center">${esc(R.q)}</div>
+      <div class="pm">${card(R.a,"a")}<div class="vs">VS</div>${card(R.b,"b")}</div><div class="flash" id="flash"></div>
+      ${last?`<button class="btn" id="nx">${last.ok?(idx+1>=15?"Terminer":"Duel suivant"):"Voir la fin"}</button>`:""}</div>`;
+    if(last){ document.getElementById("flash").innerHTML=last.ok?`<span class="good">Bien vu ! +100</span>`:`<span class="bad">Perdu !</span>`;
+      document.getElementById("nx").onclick=()=>{ st.reveal=false; if(!last.ok||idx+1>=15) st.over=true; save(); G.plusmoins.render(); }; return; }
+    app.querySelectorAll(".pmcard").forEach(b=>b.onclick=()=>{
+      const s=b.dataset.s, x=s==="a"?R.a:R.b, y=s==="a"?R.b:R.a, ok=R.low?x[1]<y[1]:x[1]>y[1];
+      st.rounds.push({pick:s,ok}); if(ok) z.e.score+=100; st.reveal=true; save(); G.plusmoins.render();
+    });
+  },
+  recap(date,e){ return (e.st.rounds||[]).map((r,i)=>{ const R=pmRound(date,i);
+    return `<div class="it">${r.ok?`<span class="good">✓</span>`:`<span class="bad">✗</span>`} <b style="display:inline">${esc(R.a[0])}</b> (${R.a[1]}) vs <b style="display:inline">${esc(R.b[0])}</b> (${R.b[1]}) <span class="note">· ${esc(R.unit)}</span></div>`; }).join("")||`<div class="empty">Aucun duel joué.</div>`; }
+};
+
+// ═════════════════════════ DÉMARRAGE ═════════════════════════
+
+// ═════ Stockage : base de données de l'artifact claude.ai ═════
+let wq = Promise.resolve();
+function persist(patch){
+  if(S.test){ if(patch.days) Object.assign(testBox.days, JSON.parse(JSON.stringify(patch.days))); return wq; }
+  if(patch.fullWeeks && S.solo){ local.fullWeeks=Object.assign(local.fullWeeks||{},patch.fullWeeks); return wq; }
+  const cur = S.solo ? local : (S.players[S.uid] ? JSON.parse(JSON.stringify(S.players[S.uid])) : {days:{}});
+  if(patch.pseudo!==undefined) cur.pseudo=patch.pseudo;
+  if(patch.days){ cur.days=cur.days||{}; Object.assign(cur.days, JSON.parse(JSON.stringify(patch.days))); }
+  if(patch.fullWeeks){ cur.fullWeeks=Object.assign(cur.fullWeeks||{}, patch.fullWeeks); }
+  if(S.solo) return wq;
+  const existed=!!S.players[S.uid]; S.players[S.uid]=cur;
+  const ref=S.db.doc("players/"+S.uid);
+  wq = wq.then(async()=>{
+    try{ if(!existed && !S._created){ await ref.set(cur); S._created=true; } else await ref.update(patch); }
+    catch(e){
+      if(e && e.code==="unavailable"){ await new Promise(r=>setTimeout(r,800+Math.random()*800)); try{ await ref.update(patch); return; }catch(_){} }
+      if(e && e.code==="invalid_argument"){ S.readOnly=true; S.err="Ton accès est en lecture seule : demande à l'organisateur de t'inviter pour pouvoir jouer."; }
+      else S.err="Impossible d'enregistrer pour le moment. Vérifie ta connexion.";
+      if(S.view!=="play") render();
+    }
+  });
+  return wq;
+}
+
+function afterLoad(){
+  if(S.view!=="loading") return;
+  const m=me(); S.view=(!S.readOnly && !(m&&m.pseudo)) ? "pseudo" : "home"; render();
+}
+async function init(){
+  render();
+  setInterval(()=>{
+    document.querySelectorAll(".cd").forEach(el=>{ el.textContent=cdText(+el.dataset.t-Date.now()); });
+    const t=todayStr(); if(t!==S.today){ S.today=t; if(!S.test){ S.week=weekOf(t); if(S.view==="home"||S.view==="result") render(); } }
+  }, 1000);
+  const C=window.claude;
+  if(!C||!C.use){ S.solo=true; return afterLoad(); }
+  let db=null,user=null;
+  try{ [db,user]=await Promise.all([C.use("db"),C.use("user")]); }catch(_){}
+  if(!db||!user){ S.solo=true; return afterLoad(); }
+  S.db=db; S.user=user;
+  try{ S.uid=await user.id(); }catch(_){}
+  try{ S.isOwner=!!(await user.isOwner()); }catch(_){}
+  if(!S.uid){ S.solo=true; return afterLoad(); }
+  const slow=setTimeout(()=>{ S.slow=true; if(S.view==="loading") render(); },10000);
+  db.collection("players").onSnapshot(async snap=>{
+    const fresh={}; snap.docs.forEach(d=>{ if(d.exists) fresh[d.id]=d.data(); });
+    if(S.players[S.uid] && snap.metadata.hasPendingWrites) fresh[S.uid]=S.players[S.uid];
+    S.players=fresh;
+    if(!snap.metadata.fromCache){ clearTimeout(slow); S.slow=false; }
+    if(S.players[S.uid]) S._created=true;
+    try{ const ids=Object.keys(fresh).concat(S.uid); const ps=await user.profiles(ids); for(const id of ids){ const n=ps&&ps[id]&&ps[id].name; if(n) S.names[id]=n; } }catch(_){}
+    if(S.view==="loading") afterLoad(); else if(S.view==="home") render();
+  }, ()=>{ clearTimeout(slow); S.err="Le classement n'est pas joignable pour le moment."; if(S.view==="loading") afterLoad(); else if(S.view==="home") render(); });
+}
+init();
+
+</script>
+</body>
+</html>
