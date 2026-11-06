@@ -5,7 +5,7 @@ root=os.path.dirname(d)
 r=lambda p: open(os.path.join(d,p),encoding='utf-8').read()
 HEAD_WEB='''
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#0f3d26">
+<meta name="theme-color" content="#6E4B2E">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="icon" href="/icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,7 +19,7 @@ def page(BACKEND):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lucarne — le jeu foot de la semaine</title>{HEAD_WEB if BACKEND=="backend_web.js" else ""}
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Gochi+Hand&family=Inter:wght@400;500;600;700;800&family=Anton&display=swap" rel="stylesheet">
 <style>{r('style.css')}</style>
 </head>
 <body>

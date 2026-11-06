@@ -191,3 +191,126 @@ input.txt:focus{outline:2px solid var(--yellow)}
 .appcard{border-color:rgba(255,255,255,.3)}
 .kbd{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:12px}
 .recapw{border-color:rgba(255,210,63,.45)}
+
+/* ═════════ v5 · Tableau tactique (ardoise, craie, cadre bois) ═════════ */
+:root{
+  --pitch:#2A3735; --pitch2:#2A3735; --line:rgba(236,234,226,.28); --chalk:#ECEAE2; --ink:#1E2422;
+  --muted:#AEBBB6; --yellow:#F4E3A1; --red:#F2A38C; --good:#A8D5A2; --card:transparent;
+  --wood:#6E4B2E; --board:#2A3735; --paper:#FBF7EC; --magnet:#D6453A;
+  --hand:"Gochi Hand",cursive; --marker:"Permanent Marker",cursive; --num:Inter,system-ui,sans-serif;
+}
+body{background:var(--wood);font-family:Inter,system-ui,sans-serif;color:var(--chalk)}
+.wrap{background:var(--board);margin:10px auto 0;min-height:calc(100vh - 32px);box-shadow:inset 0 0 0 2px #5A3D25;border-radius:4px;position:relative;overflow:hidden;padding-bottom:40px}
+.wrap::after{content:"";position:fixed;left:0;right:0;bottom:0;height:22px;background:linear-gradient(90deg,transparent 18px,#ECEAE2 18px,#ECEAE2 52px,transparent 52px,transparent 62px,#F4E3A1 62px,#F4E3A1 84px,transparent 84px,transparent 94px,#F2A38C 94px,#F2A38C 122px,transparent 122px) 0 8px/100% 7px no-repeat,var(--wood);pointer-events:none;z-index:40}
+@media (min-width:600px){.wrap{max-width:560px}}
+h1,.display,h2{font-family:var(--marker);font-weight:400;text-transform:none;letter-spacing:0}
+.logo{font-family:var(--marker);font-size:40px;line-height:1}
+.logo span{color:var(--chalk)}
+.sub,.note,.tlabel,.lbl,.empty,.qhead > span:first-child,.prog b{font-family:var(--hand);letter-spacing:0;text-transform:none}
+.sub{font-size:17px}.note{font-size:16px;line-height:1.35}.lbl{font-size:16px}.empty{font-size:17px}
+.tlabel{font-size:18px;font-weight:400;color:var(--yellow)}
+h2{font-size:24px;text-transform:none}
+.card{background:transparent;border:2px dashed var(--line);border-radius:10px;backdrop-filter:none}
+.pts,.sc,.rk,.big,.score,.pmval b,.cd{font-family:var(--num);font-weight:800}
+.big{font-size:64px;color:var(--yellow)}
+.btn{font-family:Inter,sans-serif;font-weight:800;border-radius:10px;background:var(--yellow);color:var(--board)}
+.btn.ghost{border:2px solid rgba(236,234,226,.55);color:var(--chalk);background:transparent}
+.tab{font-family:var(--hand);font-size:17px;border:2px solid var(--line)}
+.tab.on{background:var(--chalk);color:var(--board)}
+/* jeu du jour : feuille de papier aimantée */
+.today-card{position:relative;background:var(--paper);color:var(--ink);border:0;border-radius:3px;transform:rotate(-1.2deg);box-shadow:0 6px 0 rgba(0,0,0,.2);margin-top:14px;padding-top:22px}
+.today-card::before{content:"";position:absolute;top:-9px;left:50%;margin-left:-11px;width:22px;height:22px;border-radius:50%;background:var(--magnet);box-shadow:0 2px 0 rgba(0,0,0,.35),inset -3px -3px 0 rgba(0,0,0,.18)}
+.today-card .tlabel{color:#4B5552}
+.today-card .note{color:#39413E}
+.today-card .tname{color:var(--ink);font-size:30px}
+.today-card .btn{background:var(--ink);color:var(--yellow)}
+.today-card .btn.ghost{background:transparent;color:var(--ink);border-color:rgba(30,36,34,.4)}
+.temo{font-size:38px}
+/* compte à rebours façon panneau de score */
+.teaser{background:transparent;border:2px solid var(--line)}
+.cd{display:inline-block;background:#151C1B;color:var(--yellow);border-radius:8px;padding:6px 12px;font-size:28px;margin-top:6px}
+.cdwrap{font-family:var(--hand);text-transform:none;letter-spacing:0;font-size:17px}
+/* semaine */
+.day{background:transparent;border:2px solid rgba(236,234,226,.35);border-radius:10px;font-family:var(--hand);font-size:15px;color:var(--muted)}
+.day b{font-family:var(--num)}
+.day .s{font-family:var(--num);font-size:12px}
+.day.done{background:transparent;border-color:var(--chalk);color:var(--chalk)}
+.day.done .s{color:var(--yellow)}
+.day.open{border:2px dashed var(--yellow);color:var(--yellow)}
+.day.open .s{color:var(--yellow)}
+.day.today{outline:none;background:var(--yellow);color:var(--board);border-color:var(--yellow)}
+.day.today .s{color:var(--board)}
+.day.locked{opacity:.45}
+/* classements */
+.row,.lrow{border-bottom:1px dashed rgba(236,234,226,.22)}
+.row .nm,.lmain .nm{font-family:var(--hand);font-size:21px;font-weight:400}
+.row .nm small{font-family:var(--hand);font-size:15px}
+.rk{width:30px;height:30px;border-radius:50%;border:2px solid var(--chalk);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--chalk)}
+.row.r1 .rk,.lrow:first-child .rk{background:var(--yellow);border-color:var(--yellow);color:var(--board)}
+.row.mine,.lrow.mine{background:transparent;border-bottom:2px solid rgba(244,227,161,.6);border-radius:0}
+.row.lanterne{background:transparent;border:2px solid var(--red);border-radius:40px 18px 36px 22px / 22px 34px 18px 30px;transform:rotate(-.6deg);margin:4px 0}
+.row.lanterne .rk{border-color:var(--red);color:var(--red);font-size:16px}
+.row.lanterne small{color:var(--red)}
+.ricard{background:var(--yellow);color:var(--board);font-family:var(--num)}
+.wk{font-family:var(--num);background:rgba(236,234,226,.08)}
+.ardoise{border:2px solid rgba(242,163,140,.55)}
+.ardoise .sc{color:var(--red)}
+.prog{border-bottom:1px dashed var(--line)}
+.prog span{font-family:var(--hand);font-size:19px}
+/* jeux */
+.cat{background:transparent;color:var(--yellow);border:2px solid var(--yellow);font-family:var(--hand);font-size:16px;font-weight:400;text-transform:none;letter-spacing:0}
+.q{font-family:var(--hand);font-size:26px;font-weight:400;line-height:1.2}
+.opt{background:transparent;border:2px solid rgba(236,234,226,.55);border-radius:10px;font-family:Inter,sans-serif}
+.opt.ok{background:rgba(168,213,162,.15);border-color:var(--good)}
+.opt.ko{background:rgba(242,163,140,.15);border-color:var(--red)}
+.timer{background:rgba(236,234,226,.12)}
+.dots i{background:rgba(236,234,226,.2)} .dots i.cur{background:var(--chalk)} .dots i.ok{background:var(--good)} .dots i.ko{background:var(--red)}
+.flash{font-family:var(--marker);text-transform:none}
+input.txt{background:transparent;border:2px solid var(--chalk);color:var(--chalk);border-radius:10px;font-family:Inter,sans-serif}
+input.txt::placeholder{color:#7E8E89}
+input.txt:focus{outline:2px solid var(--yellow)}
+.sugg{background:var(--paper);color:var(--ink);font-family:Inter,sans-serif}
+.sg.on,.sg:hover{background:var(--yellow)}
+.pitch{background:transparent;border:2px solid rgba(236,234,226,.8)}
+.pitch .pl{border-color:rgba(236,234,226,.8)}
+.shirt{background:transparent;border:2.4px solid var(--chalk);color:var(--chalk);font-family:var(--num);font-size:12px}
+.slot span{background:transparent;font-family:var(--hand);font-size:16px;font-weight:400;color:#7E8E89}
+.slot.f .shirt{background:transparent;border-color:var(--yellow);color:var(--yellow)}
+.slot.f span{color:var(--yellow)}
+.slot.miss span{color:var(--red)}
+.titem{background:transparent;border-bottom:1px dashed var(--line);border-radius:0;font-family:var(--hand);font-size:20px;font-weight:400}
+.titem.f{background:transparent;color:var(--yellow)}
+.titem.miss{background:transparent;color:var(--red)}
+.titem .tl{font-family:Inter,sans-serif}
+.clue{background:transparent;border:2px solid rgba(236,234,226,.4);font-family:var(--hand);font-size:19px;font-weight:400}
+.clue span{background:var(--yellow);color:var(--board)}
+.clue.locked{border-style:dashed}
+.mbase div{background:transparent;border:2px solid var(--yellow)}
+.mbase span{font-family:var(--hand);text-transform:none;letter-spacing:0;font-size:15px}
+.pmcard{background:transparent;border:2px solid rgba(236,234,226,.55)}
+.pmname{font-family:var(--hand);font-size:21px;font-weight:400}
+.pmcard.win{background:rgba(168,213,162,.12)}
+.vs{font-family:var(--marker);color:var(--yellow)}
+.lvl{font-family:var(--hand);font-size:15px;font-weight:400;text-transform:none;letter-spacing:0;background:transparent;border:2px solid var(--red);color:var(--red)}
+.lvl.easy{border-color:var(--chalk);color:var(--chalk);background:transparent}
+.club span{font-family:var(--hand);font-size:14px;font-weight:400}
+.club.hidden .qmark{border-color:rgba(236,234,226,.4);font-family:var(--marker)}
+.wrong span{background:transparent;border:1.5px solid var(--red);color:var(--red);font-family:var(--hand);font-size:15px}
+.reveal .display{font-size:26px}
+.warn{background:transparent;border:2px solid var(--red);color:var(--chalk)}
+.recap .it{font-family:Inter,sans-serif}
+.appcard{border:2px solid rgba(236,234,226,.45)}
+.catch{border:2px dashed var(--yellow)} .catch .tlabel{color:var(--yellow)}
+.trow .nm b{font-family:var(--hand);font-size:20px;font-weight:400}
+.temo2{font-size:24px}
+/* récap sur le terrain (plan de jeu) */
+.rpitch{position:relative;height:420px;border:2px solid rgba(236,234,226,.8);border-radius:6px;margin-top:8px}
+.rpitch .ln{position:absolute;border:2px solid rgba(236,234,226,.8)}
+.rpitch .mg{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;width:150px}
+.rpitch .dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 13px Inter,sans-serif;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.rpitch .who{font-family:var(--hand);font-size:18px;line-height:1.1}
+.rpitch .pay{font-family:var(--hand);font-size:16px;color:var(--red)}
+/* pop-up LOSC sur l'ardoise */
+.mbox{background:var(--board);border:3px solid var(--wood)}
+.mbadge{background:var(--yellow);border-color:var(--board);font-family:var(--num)}
+.mtxt{font-family:Inter,sans-serif}

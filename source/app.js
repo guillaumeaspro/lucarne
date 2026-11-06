@@ -177,8 +177,28 @@ function lastRecap(){
   if(!rows.length || !rows.some(r=>r.s>0)) return "";
   rows.sort((a,b)=>b.s-a.s);
   const min=rows[rows.length-1].s, losers=rows.filter(r=>r.s===min), stake=rows.length-losers.length, pay=rows.length>=2&&stake>0;
-  return `<div class="card recapw" id="recap"><div class="tlabel">📊 Récap de la semaine ${parseInt(prevK.split("W")[1],10)}</div>
-    ${rows.map((r,i)=>{ const lost=pay&&r.s===min; return `<div class="row ${r.uid===S.uid?"mine":""} ${lost?"lanterne":""}"><div class="rk">${i===0?"🏆":lost?"🥃":i+1}</div><div class="nm">${esc(nameOf(r.uid))}${lost?`<small>Doit ${stake} Ricard${stake>1?"s":""} à la bande</small>`:i===0?"<small>Vainqueur de la semaine</small>":""}</div><div class="sc">${r.s}</div></div>`; }).join("")}</div>`;
+  const n=rows.length;
+  if(n>8) return `<div class="card recapw" id="recap"><div class="tlabel">Récap de la semaine ${parseInt(prevK.split("W")[1],10)}</div>
+    ${rows.map((r,i)=>{ const lost=pay&&r.s===min; return `<div class="row ${r.uid===S.uid?"mine":""} ${lost?"lanterne":""}"><div class="rk">${i===0?"1":i+1}</div><div class="nm">${esc(nameOf(r.uid))}${lost?`<small>Doit ${stake} Ricard${stake>1?"s":""} à la bande</small>`:i===0?"<small>Vainqueur de la semaine</small>":""}</div><div class="sc">${r.s}</div></div>`; }).join("")}</div>`;
+  // le plan de jeu : le premier en attaque, le dernier dans les cages
+  const xs=[50,26,74,38,62,20,80];
+  const mags=rows.map((r,i)=>{
+    const lost=pay&&r.s===min, last=i===n-1&&lost;
+    const y = last ? 86 : n===1 ? 20 : 12 + (i/(Math.max(1,n-1)))*62;
+    const x = i===0||last ? 50 : xs[i%xs.length];
+    const bg = i===0 ? "background:var(--yellow);color:var(--board)" : lost ? "background:var(--magnet);color:#fff" : r.uid===S.uid ? "background:#2F6FD0;color:#fff" : "background:var(--chalk);color:var(--board)";
+    const label = (i===0?"1er":(i+1)+"e");
+    return `<div class="mg" style="left:${x}%;top:${y}%">${last?`<span class="pay">dans les cages : ${stake} Ricard${stake>1?"s":""}</span>`:""}<span class="dot" style="${bg}">${label}</span><span class="who">${esc(r.uid===S.uid?"Toi":nameOf(r.uid))} · ${r.s}</span></div>`;
+  }).join("");
+  return `<div class="card recapw" id="recap"><div class="tlabel">Récap de la semaine ${parseInt(prevK.split("W")[1],10)} · le plan de jeu</div>
+    <p class="note">En tête = en attaque. Le dernier garde les cages… et paie sa tournée.</p>
+    <div class="rpitch">
+      <div class="ln" style="left:24%;right:24%;top:-2px;height:12%;border-top:0"></div>
+      <div class="ln" style="left:24%;right:24%;bottom:-2px;height:12%;border-bottom:0"></div>
+      <div class="ln" style="left:0;right:0;top:50%;height:0;border-width:2px 0 0"></div>
+      <div class="ln" style="left:50%;top:50%;width:76px;height:76px;margin:-40px 0 0 -40px;border-radius:50%"></div>
+      ${mags}
+    </div></div>`;
 }
 
 // ═════════════════════════ CONTENU DU JOUR ═════════════════════════

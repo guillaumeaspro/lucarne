@@ -27,6 +27,7 @@ Chaque jeu ouvre à **7h (heure de Paris)** et reste le jeu du jour jusqu'à 7h 
 - `python3 source/build.py` génère `index.html` (le site, à la racine) et `source/artifact.html` (version artifact). Ne jamais modifier `index.html` à la main.
 - Rotation : chaque banque est mélangée une fois puis avance d'un cran par semaine ISO (`weekSlice`).
 - Tout joueur cité dans `PARCOURS` doit exister dans `P`. Réponses en saisie libre : alias séparés par `|`, tolérance Levenshtein 1 (≥ 5 lettres) ou 2 (≥ 8 lettres).
+- Style « Tableau tactique » : ardoise #2A3735 dans un cadre bois #6E4B2E, craie #ECEAE2, craie jaune #F4E3A1 (accent), corail #F2A38C (erreurs, lanterne rouge), aimant #D6453A. Polices : Permanent Marker (titres), Gochi Hand (écriture craie), Inter (chiffres, boutons). Jeu du jour = feuille de papier aimantée ; compte à rebours en panneau de score ; récap du lundi dessiné sur un terrain (1er en attaque, dernier dans les cages). Maquettes de référence : artifact « Lucarne — pistes de design » (B2, B3, écran de jeu).
 - Écussons : génériques (bouclier aux couleurs du club + sigle), **jamais les logos officiels** ; pas de photos de joueurs.
 - Contenu : uniquement des faits stables. Éviter « club actuel » et records en cours.
 
