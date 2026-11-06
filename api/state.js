@@ -8,8 +8,9 @@ const MAX_BYTES = 150_000;            // taille max d'une fiche joueur
 const ID_RE = /^[a-z0-9]{8,40}$/, SECRET_RE = /^[a-z0-9]{16,64}$/;
 
 function blobUrl() {
-  const t = process.env.BLOB_READ_WRITE_TOKEN || "";
-  const storeId = t.split("_")[3];
+  const fromEnv = (process.env.BLOB_STORE_ID || "").replace(/^store_/, "");
+  const fromToken = (process.env.BLOB_READ_WRITE_TOKEN || "").split("_")[3];
+  const storeId = fromEnv || fromToken;
   if (!storeId) throw new Error("Stockage non configuré");
   return `https://${storeId.toLowerCase()}.public.blob.vercel-storage.com/${PATH}`;
 }
