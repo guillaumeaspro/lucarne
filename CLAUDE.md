@@ -37,6 +37,16 @@ Chaque jeu ouvre à **7h (heure de Paris)** et reste le jeu du jour jusqu'à 7h 
 - Mode test organisateur : ouvrir une fois le site avec `#orga` à la fin du lien.
 - Pas de compte : n'importe qui ayant le lien peut jouer sous le pseudo de son choix.
 
+
+## Appli installable et notifications
+- PWA : `manifest.webmanifest`, `icons/` (icône originale : cage + ballon dans la lucarne), `sw.js` (réception des notifications, page dispo hors connexion). Balises ajoutées par `source/build.py` pour la version site seulement.
+- Carte « 📲 L'appli Lucarne » sur l'accueil : installation (bouton Android / consignes iPhone : Partager → Sur l'écran d'accueil) puis « Activer les notifications ». Sur iPhone, les notifs ne marchent qu'une fois l'appli installée.
+- `api/push.js` : GET clé publique, POST abonnement (lié au joueur), DELETE désabonnement.
+- Clés de notification (VAPID), abonnements et envois déjà faits : fichier privé `lucarne/private/…` à adresse aléatoire dans Vercel Blob (retrouvé par le serveur via `list`). Les clés sont générées automatiquement au premier usage, aucune variable à saisir.
+- `api/cron.js` : planifié tous les jours à 6h05 UTC dans `vercel.json` (7h05 l'hiver, 8h05 l'été ; Vercel gratuit peut décaler dans l'heure). Envoie « Nouveau jeu dispo », et le lundi le récap de la semaine écoulée s'il n'est pas déjà parti. Un envoi par jour maximum.
+- Récap anticipé : dès que tous les joueurs actifs (≥ 2) ont fini les 7 jeux, `api/state.js` envoie le récap tout de suite (une fois par semaine).
+- Carte « 📊 Récap de la semaine » sur l'accueil (dernière semaine terminée) ; les notifs du récap ouvrent `/#recap`.
+
 ## Publication
 - Modifier `source/`, lancer `python3 source/build.py`, puis commit + push sur `main` : Vercel redéploie tout seul.
 - C'est Claude qui fait la mise en ligne : l'utilisateur ne veut rien avoir à faire à la main.

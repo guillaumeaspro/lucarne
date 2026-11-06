@@ -1,27 +1,9 @@
-// API des scores de Lucarne : GET = toutes les fiches joueurs, POST = enregistrer sa propre fiche.
-// Stockage : un seul fichier JSON dans Vercel Blob (lucarne/state.json).
-import { put } from "@vercel/blob";
-import crypto from "node:crypto";
+// API des scores : GET = toutes les fiches joueurs, POST = enregistrer sa propre fiche.
+import { readState, writeState, hash, readPrivate, writePrivate, sendAll, gameDay, weekOf, weekResults, recapText, SITE } from "./_lib.js";
 
-const PATH = "lucarne/state.json";
-const MAX_BYTES = 150_000;            // taille max d'une fiche joueur
+const MAX_BYTES = 150_000;
 const ID_RE = /^[a-z0-9]{8,40}$/, SECRET_RE = /^[a-z0-9]{16,64}$/;
 
-function blobUrl() {
-  const fromEnv = (process.env.BLOB_STORE_ID || "").replace(/^store_/, "");
-  const fromToken = (process.env.BLOB_READ_WRITE_TOKEN || "").split("_")[3];
-  const storeId = fromEnv || fromToken;
-  if (!storeId) throw new Error("Stockage non configuré");
-  return `https://${storeId.toLowerCase()}.public.blob.vercel-storage.com/${PATH}`;
-}
-async function readState() {
-  const r = await fetch(blobUrl() + "?v=" + Date.now(), { cache: "no-store" });
-  if (r.status === 404 || r.status === 403) return { players: {} };
-  if (!r.ok) throw new Error("Lecture impossible " + r.status);
-  const s = await r.json();
-  return s && s.players ? s : { players: {} };
-}
-const hash = (s) => crypto.createHash("sha256").update("lucarne:" + s).digest("hex");
 function clean(doc) {
   const out = { pseudo: String(doc.pseudo || "").slice(0, 20), days: {}, fullWeeks: {} };
   for (const [k, e] of Object.entries(doc.days || {})) {
@@ -31,6 +13,18 @@ function clean(doc) {
   }
   for (const k of Object.keys(doc.fullWeeks || {})) if (/^\d{4}-W\d{2}$/.test(k)) out.fullWeeks[k] = true;
   return out;
+}
+
+// Si tous les joueurs actifs ont fini les 7 jeux de la semaine, on envoie le récap tout de suite (une seule fois)
+async function maybeEarlyRecap(state) {
+  const wk = weekOf(gameDay());
+  const rows = weekResults(state, wk);
+  if (rows.length < 2 || !rows.every((r) => r.n === 7)) return;
+  const p = await readPrivate();
+  if (p.data.sent["recap-" + wk.key]) return;
+  p.data.sent["recap-" + wk.key] = Date.now(); p.dirty = true;
+  await sendAll(p, { title: `📊 Récap de la semaine ${wk.num} dispo !`, body: "Tout le monde a joué : " + recapText(rows, wk), tag: "recap", url: SITE + "/#recap" });
+  await writePrivate(p);
 }
 
 export default async function handler(req, res) {
@@ -52,10 +46,8 @@ export default async function handler(req, res) {
       if (check) return existing ? res.status(200).json({ ok: true }) : res.status(404).json({ error: "inconnu" });
       if (!doc || JSON.stringify(doc).length > MAX_BYTES) return res.status(400).json({ error: "fiche invalide" });
       s.players[id] = { ...clean(doc), h: hash(secret), u: Date.now() };
-      await put(PATH, JSON.stringify(s), {
-        access: "public", addRandomSuffix: false, allowOverwrite: true,
-        contentType: "application/json", cacheControlMaxAge: 60,
-      });
+      await writeState(s);
+      try { await maybeEarlyRecap(s); } catch (_) {}
       res.setHeader("Cache-Control", "no-store");
       return res.status(200).json({ ok: true });
     }

@@ -188,3 +188,6 @@ input.txt:focus{outline:2px solid var(--yellow)}
 .confetti{position:absolute;inset:0;pointer-events:none}
 .confetti i{position:absolute;top:-10px;width:8px;height:14px;border-radius:2px;animation:fall 2.6s linear infinite;opacity:.9}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.appcard{border-color:rgba(255,255,255,.3)}
+.kbd{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:12px}
+.recapw{border-color:rgba(255,210,63,.45)}

@@ -90,6 +90,56 @@ function showCode(){
   };
 }
 
+// ── Appli installable + notifications push ──
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone=()=>{ try{ return matchMedia("(display-mode: standalone)").matches || navigator.standalone===true; }catch(_){ return false; } };
+const pushOK=()=>"serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+let installEvt=null, swReg=null, pushState="?";
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); installEvt=e; if(S.view==="home") render(); });
+const b64=s=>{ const p="=".repeat((4-s.length%4)%4), b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from([...b].map(c=>c.charCodeAt(0))); };
+async function refreshPushState(){
+  if(!pushOK()||!swReg){ pushState="na"; return; }
+  if(Notification.permission==="denied"){ pushState="denied"; return; }
+  const sub=await swReg.pushManager.getSubscription(); pushState=sub?"on":"off";
+}
+async function enablePush(){
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=="granted"){ pushState=perm==="denied"?"denied":"off"; render(); return; }
+    const {publicKey}=await (await fetch("/api/push")).json();
+    let sub=await swReg.pushManager.getSubscription();
+    if(!sub) sub=await swReg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64(publicKey)});
+    const r=await fetch("/api/push",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:S.uid,secret:ident.secret,sub:sub.toJSON()})});
+    if(!r.ok) throw new Error(r.status);
+    pushState="on";
+  }catch(e){ S.err="Impossible d'activer les notifications pour le moment, réessaie."; }
+  render();
+}
+async function disablePush(){
+  try{ const sub=await swReg.pushManager.getSubscription(); if(sub){ await fetch("/api/push",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:sub.endpoint})}); await sub.unsubscribe(); } }catch(_){}
+  pushState="off"; render();
+}
+function appCard(){
+  if(S.test) return "";
+  const inst=isStandalone();
+  if(inst && pushState==="on") return `<p class="note center" style="margin:-4px 0 12px">🔔 Notifications activées · <a href="#" id="pushoff" style="color:var(--muted)">désactiver</a></p>`;
+  let body="";
+  if(!inst){
+    if(isIOS) body+=`<p class="note" style="margin-bottom:8px"><b>Installe Lucarne sur ton iPhone</b> (obligatoire pour recevoir les notifs) : dans Safari, touche <b>Partager</b> <span class="kbd">⬆︎</span> puis <b>« Sur l'écran d'accueil »</b>. Ouvre ensuite Lucarne depuis son icône.</p>`;
+    else if(installEvt) body+=`<button class="btn" id="install" style="margin-bottom:8px">📲 Installer l'appli sur mon téléphone</button>`;
+    else body+=`<p class="note" style="margin-bottom:8px"><b>Installe Lucarne</b> : dans le menu du navigateur <span class="kbd">⋮</span>, choisis <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.</p>`;
+  }
+  if(pushState==="off" && (!isIOS||inst)) body+=`<button class="btn${inst?"":" ghost"}" id="pushon">🔔 Activer les notifications</button><p class="note" style="margin-top:6px">Un rappel chaque matin quand le nouveau jeu ouvre, et le récap de la semaine.</p>`;
+  if(pushState==="denied") body+=`<p class="note">🔕 Les notifications sont bloquées pour Lucarne. Pour les recevoir, autorise-les dans les réglages du téléphone (Notifications → Lucarne), puis reviens ici.</p>`;
+  if(!body) return "";
+  return `<div class="card appcard"><div class="tlabel">📲 L'appli Lucarne</div>${body}</div>`;
+}
+function bindAppCard(){
+  const i=document.getElementById("install"); if(i) i.onclick=async()=>{ installEvt.prompt(); try{ await installEvt.userChoice; }catch(_){} installEvt=null; render(); };
+  const on=document.getElementById("pushon"); if(on) on.onclick=enablePush;
+  const off=document.getElementById("pushoff"); if(off) off.onclick=e=>{ e.preventDefault(); disablePush(); };
+}
+
 // ═════════════════════════ DÉMARRAGE ═════════════════════════
 function afterLoad(){
   if(S.view!=="loading") return;
@@ -107,6 +157,8 @@ async function init(){
     const t=todayStr(); if(t!==S.today){ S.today=t; if(!S.test){ S.week=weekOf(t); if(S.view==="home"||S.view==="result") render(); } }
   }, 1000);
   const slow=setTimeout(()=>{ S.slow=true; if(S.view==="loading") render(); },10000);
+  if("serviceWorker" in navigator){ try{ swReg=await navigator.serviceWorker.register("/sw.js"); await navigator.serviceWorker.ready; }catch(_){} }
+  try{ await refreshPushState(); }catch(_){ pushState="na"; }
   try{ await pull(); }catch(_){ S.err="Le classement n'est pas joignable pour le moment. Tu peux jouer quand même : ton score sera envoyé plus tard."; }
   clearTimeout(slow); afterLoad();
   // rafraîchit le classement toutes les minutes et au retour sur l'appli

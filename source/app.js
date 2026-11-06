@@ -165,6 +165,21 @@ function palmares(){
   return Object.keys(weeks).sort().reverse().slice(0,8).map(k=>{ const best=Object.entries(weeks[k]).sort((a,b)=>b[1]-a[1])[0]; return {k,uid:best[0],s:best[1]}; });
 }
 const wlabel = k => "S"+parseInt(k.split("W")[1],10);
+// Récap de la dernière semaine terminée : classement, vainqueur, Ricard
+function lastRecap(){
+  const prevK=weekKeyBefore(S.week.key), prevPrev=weekKeyBefore(prevK);
+  const rows=[];
+  for(const [uid,p] of Object.entries(S.players)){
+    if(!p||!p.pseudo) continue;
+    const w=playerWeeks(p);
+    if(w[prevK]!==undefined || w[prevPrev]!==undefined) rows.push({uid,s:w[prevK]||0});
+  }
+  if(!rows.length || !rows.some(r=>r.s>0)) return "";
+  rows.sort((a,b)=>b.s-a.s);
+  const min=rows[rows.length-1].s, losers=rows.filter(r=>r.s===min), stake=rows.length-losers.length, pay=rows.length>=2&&stake>0;
+  return `<div class="card recapw" id="recap"><div class="tlabel">📊 Récap de la semaine ${parseInt(prevK.split("W")[1],10)}</div>
+    ${rows.map((r,i)=>{ const lost=pay&&r.s===min; return `<div class="row ${r.uid===S.uid?"mine":""} ${lost?"lanterne":""}"><div class="rk">${i===0?"🏆":lost?"🥃":i+1}</div><div class="nm">${esc(nameOf(r.uid))}${lost?`<small>Doit ${stake} Ricard${stake>1?"s":""} à la bande</small>`:i===0?"<small>Vainqueur de la semaine</small>":""}</div><div class="sc">${r.s}</div></div>`; }).join("")}</div>`;
+}
 
 // ═════════════════════════ CONTENU DU JOUR ═════════════════════════
 function quizItems(date){ // dimanche : 10 questions de la banque, tournantes
@@ -305,6 +320,8 @@ function renderHome(){
   + (S.err?`<div class="warn">${esc(S.err)}</div>`:"")
   + (S.solo?`<div class="warn">Mode solo : le classement partagé n'est pas disponible ici, tes scores ne seront pas enregistrés.</div>`:"")
   + top
+  + (typeof appCard==="function"?appCard():"")
+  + lastRecap()
   + `<div class="card">
       <div class="me"><div><div class="lbl">${m&&m.pseudo?esc(m.pseudo):"Toi"} ${S.solo?"":`· <a href="#" id="rename" style="color:var(--muted)">modifier</a>`}${typeof showCode==="function"?` · <a href="#" id="mycodeL" style="color:var(--muted)">mon code joueur</a>`:""}</div>
       <div class="pts">${mine.s} <span style="font-size:18px;color:var(--chalk)">pts cette semaine</span></div>
@@ -326,6 +343,8 @@ function renderHome(){
   app.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>openIntro(b.dataset.c));
   const st=document.getElementById("seetoday"); if(st) st.onclick=e=>{e.preventDefault(); openResult(S.today);};
   const rn=document.getElementById("rename"); if(rn) rn.onclick=e=>{e.preventDefault(); S.pseudoDraft=""; S.view="pseudo"; render();};
+  if(typeof bindAppCard==="function") bindAppCard();
+  if(location.hash==="#recap"){ const rc=document.getElementById("recap"); if(rc){ setTimeout(()=>rc.scrollIntoView({behavior:"smooth"}),100); } try{ history.replaceState(null,"",location.pathname); }catch(_){} }
   const mc=document.getElementById("mycodeL"); if(mc) mc.onclick=e=>{e.preventDefault(); showCode();};
   const tm=document.getElementById("testmode"); if(tm) tm.onclick=()=>{ S.test=true; testBox={pseudo:"Test",days:{}}; render(); window.scrollTo(0,0); };
 }
