@@ -23,6 +23,7 @@ Chaque jeu ouvre à **7h (heure de Paris)** et reste le jeu du jour jusqu'à 7h 
 
 ## Structure
 - `source/` : `style.css`, `questions.js` (banque du quiz `Q`), `data.js` (joueurs `P`, couleurs des clubs, banques des jeux), `app.js` (logique commune), `backend_web.js` (site Vercel), `backend_claude.js` (artifact).
+- `source/launcher.html` : page publiée dans l'artifact claude.ai épinglé (slug `89614fe2-…`), qui renvoie vers le site.
 - `python3 source/build.py` génère `index.html` (le site, à la racine) et `source/artifact.html` (version artifact). Ne jamais modifier `index.html` à la main.
 - Rotation : chaque banque est mélangée une fois puis avance d'un cran par semaine ISO (`weekSlice`).
 - Tout joueur cité dans `PARCOURS` doit exister dans `P`. Réponses en saisie libre : alias séparés par `|`, tolérance Levenshtein 1 (≥ 5 lettres) ou 2 (≥ 8 lettres).

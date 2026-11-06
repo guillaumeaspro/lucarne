@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucarne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--pitch:#0f3d26;--pitch2:#124a2e;--line:rgba(255,255,255,.14);--chalk:#f5f2e8;--ink:#0b1f14;--muted:#9fb8a8;--yellow:#ffd23f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;font-family:"Bricolage Grotesque",system-ui,sans-serif;color:var(--chalk);
+  background:repeating-linear-gradient(180deg,var(--pitch) 0 64px,var(--pitch2) 64px 128px);display:flex;align-items:center;justify-content:center;padding:24px}
+.box{max-width:440px;width:100%;text-align:center}
+.goal{width:120px;height:86px;margin:0 auto 18px;position:relative;border:6px solid var(--chalk);border-bottom:none;
+  background-image:linear-gradient(rgba(255,255,255,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.15) 1px,transparent 1px);background-size:12px 12px}
+.goal i{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:var(--yellow);border:3px solid var(--ink)}
+h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:56px;letter-spacing:.02em;line-height:.95}
+h1 span{color:var(--yellow)}
+.sub{color:var(--muted);margin:8px 0 26px}
+.btn{display:block;width:100%;border-radius:14px;padding:16px;font:800 18px "Bricolage Grotesque",sans-serif;text-decoration:none;cursor:pointer;margin-bottom:10px;border:0}
+.main{background:var(--yellow);color:var(--ink)}
+.ghost{background:transparent;color:var(--chalk);border:1px solid var(--line)}
+.url{font-size:14px;color:var(--muted);margin:14px 0 4px;word-break:break-all}
+.note{font-size:13px;color:var(--muted);line-height:1.5;margin-top:18px;text-align:left;background:rgba(6,26,16,.6);border:1px solid var(--line);border-radius:14px;padding:14px}
+.note b{color:var(--chalk)}
+#ok{min-height:20px;font-size:14px;color:var(--yellow)}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="goal"><i></i></div>
+  <h1>Lucar<span>ne</span></h1>
+  <p class="sub">Le jeu foot de la semaine entre potes</p>
+  <a class="btn main" href="https://lucarne-three.vercel.app/" target="_blank" rel="noopener">⚽ Ouvrir Lucarne</a>
+  <a class="btn ghost" href="https://lucarne-three.vercel.app/#orga" target="_blank" rel="noopener">🧪 Ouvrir en mode organisateur</a>
+  <button class="btn ghost" id="copy">🔗 Copier le lien à envoyer aux potes</button>
+  <div id="ok"></div>
+  <p class="url">https://lucarne-three.vercel.app</p>
+  <div class="note"><b>Installer l'appli sur le téléphone :</b> ouvre le lien sur le téléphone, puis sur Android « Installer l'appli » (ou menu ⋮ → Installer l'application), sur iPhone dans Safari : Partager → « Sur l'écran d'accueil ». Active ensuite les notifications depuis l'accueil de l'appli.</div>
+</div>
+<script>
+document.getElementById("copy").onclick=async()=>{
+  const ok=document.getElementById("ok");
+  try{ await navigator.clipboard.writeText("https://lucarne-three.vercel.app"); ok.textContent="Lien copié !"; }
+  catch(_){ ok.textContent="Copie impossible ici : sélectionne le lien ci-dessous."; }
+};
+</script>
+</body>
+</html>
