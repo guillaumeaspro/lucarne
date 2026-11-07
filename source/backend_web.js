@@ -119,24 +119,34 @@ async function disablePush(){
   try{ const sub=await swReg.pushManager.getSubscription(); if(sub){ await fetch("/api/push",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:sub.endpoint})}); await sub.unsubscribe(); } }catch(_){}
   pushState="off"; render();
 }
-function appCard(){
+function appCard(full){
   if(S.test) return "";
   const inst=isStandalone();
-  if(inst && pushState==="on") return `<p class="note center" style="margin:-4px 0 12px">🔔 Notifications activées · <a href="#" id="pushoff" style="color:var(--muted)">désactiver</a></p>`;
+  if(inst && pushState==="on") return `<div class="card appcard"><h2>L'appli</h2><p class="note">Appli installée, notifications activées. <a href="#" id="pushoff">Désactiver les notifications</a></p></div>`;
   let body="";
   if(!inst){
-    if(isIOS) body+=`<p class="note" style="margin-bottom:8px"><b>Installe Lucarne sur ton iPhone</b> (obligatoire pour recevoir les notifs) : dans Safari, touche <b>Partager</b> <span class="kbd">⬆︎</span> puis <b>« Sur l'écran d'accueil »</b>. Ouvre ensuite Lucarne depuis son icône.</p>`;
-    else if(installEvt) body+=`<button class="btn" id="install" style="margin-bottom:8px">📲 Installer l'appli sur mon téléphone</button>`;
-    else body+=`<p class="note" style="margin-bottom:8px"><b>Installe Lucarne</b> : dans le menu du navigateur <span class="kbd">⋮</span>, choisis <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.</p>`;
-  }
-  if(pushState==="off" && (!isIOS||inst)) body+=`<button class="btn${inst?"":" ghost"}" id="pushon">🔔 Activer les notifications</button><p class="note" style="margin-top:6px">Un rappel chaque matin quand le nouveau jeu ouvre, et le récap de la semaine.</p>`;
-  if(pushState==="denied") body+=`<p class="note">🔕 Les notifications sont bloquées pour Lucarne. Pour les recevoir, autorise-les dans les réglages du téléphone (Notifications → Lucarne), puis reviens ici.</p>`;
-  if(!body) return "";
-  return `<div class="card appcard"><div class="tlabel">📲 L'appli Lucarne</div>${body}</div>`;
+    if(isIOS) body+=`<p class="note"><b>Installer sur iPhone</b> (obligatoire pour les notifs) : dans Safari, touche <b>Partager</b> puis <b>« Sur l'écran d'accueil »</b>, et ouvre Lucarne depuis son icône.</p>`;
+    else if(installEvt) body+=`<button class="btn" id="install">Installer l'appli sur mon téléphone</button>`;
+    else body+=`<p class="note"><b>Installer l'appli</b> : menu du navigateur <span class="kbd">⋮</span> puis <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.</p>`;
+  } else body+=`<p class="note">Appli installée.</p>`;
+  if(pushState==="off" && (!isIOS||inst)) body+=`<button class="btn${inst?"":" ghost"}" id="pushon" style="margin-top:8px">Activer les notifications</button><p class="note" style="margin-top:6px">Un rappel chaque matin quand le jeu ouvre, et le récap de la semaine.</p>`;
+  if(pushState==="denied") body+=`<p class="note">Les notifications sont bloquées : autorise-les dans les réglages du téléphone (Notifications → Lucarne).</p>`;
+  return `<div class="card appcard"><h2>L'appli et les notifs</h2>${body}</div>`;
+}
+// Bandeau d'une ligne sur l'onglet Jouer, seulement s'il manque quelque chose
+function appBanner(){
+  if(S.test) return "";
+  const inst=isStandalone();
+  if(inst && pushState!=="off") return "";
+  if(!inst && (isIOS || !installEvt)) return `<button class="appbanner" data-goto="infos"><span>Installe l'appli pour recevoir les notifs</span><b>Comment ›</b></button>`;
+  if(!inst && installEvt) return `<button class="appbanner" id="install"><span>Installe Lucarne sur ton téléphone</span><b>Installer</b></button>`;
+  if(pushState==="off") return `<button class="appbanner" id="pushon2"><span>Active les notifs pour ne rater aucun jeu</span><b>Activer</b></button>`;
+  return "";
 }
 function bindAppCard(){
   const i=document.getElementById("install"); if(i) i.onclick=async()=>{ installEvt.prompt(); try{ await installEvt.userChoice; }catch(_){} installEvt=null; render(); };
   const on=document.getElementById("pushon"); if(on) on.onclick=enablePush;
+  const on2=document.getElementById("pushon2"); if(on2) on2.onclick=enablePush;
   const off=document.getElementById("pushoff"); if(off) off.onclick=e=>{ e.preventDefault(); disablePush(); };
 }
 

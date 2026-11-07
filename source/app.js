@@ -92,7 +92,7 @@ const clubChip = (club,size=52) => `<div class="club">${badge(club,size)}<span>$
 
 // ═════════════════════════ ÉTAT & SAUVEGARDE ═════════════════════════
 const S = { view:"loading", db:null, user:null, uid:null, solo:false, readOnly:false, players:{}, names:{}, slow:false, err:"",
-  today:todayStr(), board:"week", play:null, recapKey:null, introDate:null, pseudoDraft:"" };
+  today:todayStr(), board:"week", tab:"jouer", play:null, recapKey:null, introDate:null, pseudoDraft:"" };
 S.week = weekOf(S.today);
 const local = { pseudo:"", days:{} };
 let testBox = { pseudo:"Test", days:{} };   // mode test : bac à sable, rien n'est enregistré
@@ -282,92 +282,144 @@ function renderPseudo(){
   document.getElementById("go").onclick=go; ps.onkeydown=e=>{ if(e.key==="Enter") go(); }; ps.oninput=()=>S.pseudoDraft=ps.value;
   const c=document.getElementById("cancel"); if(c) c.onclick=()=>{S.view="home";render();};
 }
+// ── Icônes de la barre du bas (traits craie) ──
+const ICON = {
+  jouer:`<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z"/></svg>`,
+  classement:`<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V12h4v8M10 20V6h4v14M16 20v-6h4v6"/></svg>`,
+  infos:`<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>`
+};
+function navBar(){
+  const t=S.tab||"jouer";
+  const b=(id,label)=>`<button class="navb ${t===id?"on":""}" data-tab="${id}" aria-current="${t===id?"page":"false"}">${ICON[id]}<span>${label}</span></button>`;
+  return `<nav class="bottomnav">${b("jouer","Jouer")}${b("classement","Classement")}${b("infos","Infos")}</nav>`;
+}
+
 function renderHome(){
-  const m=me(), w=S.week, mine=weekTotal(m,w), L=league();
-  const grank=L.rows.findIndex(r=>r.uid===S.uid)+1, myL=L.rows.find(r=>r.uid===S.uid);
-  let firstOpen=null;
+  const tab=S.tab||"jouer";
+  let body = tab==="classement" ? homeClassement() : tab==="infos" ? homeInfos() : homeJouer();
+  app.innerHTML = header()
+    + (S.err?`<div class="warn">${esc(S.err)}</div>`:"")
+    + (S.solo?`<div class="warn">Mode solo : tes scores ne seront pas enregistrés.</div>`:"")
+    + body + navBar();
+  app.querySelectorAll(".navb").forEach(b=>b.onclick=()=>{ S.tab=b.dataset.tab; render(); window.scrollTo(0,0); });
+  app.querySelectorAll("[data-play]").forEach(b=>b.onclick=()=>{ if(!S.readOnly) openIntro(b.dataset.play); });
+  app.querySelectorAll("[data-see]").forEach(b=>b.onclick=e=>{ e.preventDefault(); openResult(b.dataset.see); });
+  app.querySelectorAll("[data-goto]").forEach(b=>b.onclick=e=>{ e.preventDefault(); S.tab=b.dataset.goto; render(); window.scrollTo(0,0); });
+  app.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{ S.board=b.dataset.b; render(); });
+  const rn=document.getElementById("rename"); if(rn) rn.onclick=()=>{ S.pseudoDraft=""; S.view="pseudo"; render(); };
+  const mc=document.getElementById("mycodeL"); if(mc) mc.onclick=()=>showCode();
+  const tm=document.getElementById("testmode"); if(tm) tm.onclick=()=>{ S.test=true; testBox={pseudo:"Test",days:{}}; render(); window.scrollTo(0,0); };
+  if(typeof bindAppCard==="function") bindAppCard();
+  if(location.hash==="#recap"){ try{ history.replaceState(null,"",location.pathname); }catch(_){} if(tab!=="classement"){ S.tab="classement"; return render(); } const rc=document.getElementById("recap"); if(rc) setTimeout(()=>rc.scrollIntoView({behavior:"smooth"}),100); }
+}
+
+// ── Onglet Jouer : le jeu du jour, ta semaine, ta place ──
+function homeJouer(){
+  const m=me(), w=S.week, L=league();
+  const tg=GAMES[gameFor(S.today)], te=bestFor(m,S.today), todayDone=te&&te.done;
+  const missed=w.days.filter(d=>d<S.today && !(bestFor(m,d)&&bestFor(m,d).done));
+
+  // 1. le jeu du jour (ou le prochain si déjà joué)
+  let main;
+  if(!todayDone){
+    main=`<div class="card today-card">
+      <div class="tlabel">Aujourd'hui · ${DAYL[weekOf(S.today).dow]}</div>
+      <div class="tname display">${esc(tg.n)}</div>
+      <p class="note">${esc(tg.d)}</p>
+      ${S.readOnly?`<button class="btn" disabled>Lecture seule</button>`:`<button class="btn" data-play="${S.today}">Jouer</button>`}
+    </div>`;
+  } else {
+    const nd=nextDate(S.today), ng=GAMES[gameFor(nd)];
+    main=`<div class="card today-card done">
+      <div class="tlabel">Aujourd'hui · ${esc(tg.n)}</div>
+      <div class="doneline"><span class="display">C'est joué !</span><span class="bigscore">${te.score}<small> pts</small></span></div>
+      <a href="#" class="seelink" data-see="${S.today}">Revoir ma partie</a>
+      <div class="nextline"><span>Demain ${OPEN_H}h · <b>${esc(ng.n)}</b></span><span class="cd" data-t="${openAt(nd)}">${cdText(openAt(nd)-Date.now())}</span></div>
+    </div>`;
+  }
+
+  // 2. jours à rattraper (seulement s'il y en a)
+  const catchup = missed.length && !S.readOnly ? `<button class="appbanner catchbtn" data-play="${missed[0]}"><span><b class="cnum">${missed.length}</b> jeu${missed.length>1?"x":""} à rattraper · ${esc(GAMES[gameFor(missed[0])].n)} (${DAYL[weekOf(missed[0]).dow]})</span><b>Jouer ›</b></button>` : "";
+
+  // 3. ta semaine en 7 cases
   const chips=w.days.map((d,i)=>{
-    const e=bestFor(m,d), isToday=d===S.today, future=d>S.today, g=GAMES[gameFor(d)];
+    const e=bestFor(m,d), isToday=d===S.today, future=d>S.today;
     let cls="day", s="";
     if(e&&e.done){ cls+=" done"; s=e.score; }
-    else if(future){ cls+=" locked"; s="🔒"; }
-    else { cls+=" open"; s=e?"en cours":"à jouer"; if(!firstOpen) firstOpen=d; }
+    else if(future){ cls+=" locked"; s="—"; }
+    else { cls+=" open"; s="à jouer"; }
     if(isToday) cls+=" today";
-    return `<button class="${cls}" data-d="${d}" ${future?"disabled":""} title="${esc(g.n)}">${DAYN[i]}<i>${g.e}</i><span class="s">${s}</span></button>`;
+    const attr = e&&e.done ? `data-see="${d}"` : (!future ? `data-play="${d}"` : "disabled");
+    return `<button class="${cls}" ${attr} aria-label="${DAYL[i]} : ${esc(GAMES[gameFor(d)].n)}">${DAYN[i]}<span class="s">${s}</span></button>`;
   }).join("");
-  const tg=GAMES[gameFor(S.today)], te=bestFor(m,S.today), todayDone=te&&te.done;
-  const missed = w.days.filter(d=>d<S.today && !(bestFor(m,d)&&bestFor(m,d).done));
-  const catchup = missed.length && !S.readOnly ? `<div class="card catch"><div class="tlabel">À rattraper · ${missed.length} jeu${missed.length>1?"x":""}</div>
-    <p class="note" style="margin-bottom:10px">Pas de panique si tu as raté des jours : tu peux les jouer jusqu'à dimanche soir (lundi ${OPEN_H}h), ils comptent pour la semaine.</p>
-    ${missed.map(d=>{ const g=GAMES[gameFor(d)], e=bestFor(m,d); return `<div class="trow"><div class="temo2">${g.e}</div><div class="nm"><b>${esc(g.n)}</b><small>${DAYL[weekOf(d).dow]} ${nice(d)}${e?" · partie en cours":""}</small></div><button class="btn small" data-c="${d}">${e?"Reprendre":"Jouer"}</button></div>`; }).join("")}</div>` : "";
-  let top;
-  if(!todayDone){
-    top=`<div class="card today-card"><div class="tlabel">Aujourd'hui · ${DAYL[weekOf(S.today).dow]}</div>
-      <div class="tgame"><span class="temo">${tg.e}</span><div><div class="display tname">${esc(tg.n)}</div><p class="note">${esc(tg.d)}</p></div></div>
-      ${S.readOnly?`<button class="btn" disabled>Lecture seule</button>`:`<button class="btn" id="play" data-d="${S.today}">Jouer · ${tg.e} ${esc(tg.n)}</button>`}
-</div>`+catchup;
-  } else {
-    top=`<div class="card done-card"><div class="tlabel">Aujourd'hui · ${tg.e} ${esc(tg.n)}</div>
-      <p style="margin-bottom:10px">Fait : <b style="color:var(--yellow)">${te.score} pts</b> · <a href="#" id="seetoday" style="color:var(--chalk)">voir ma partie</a></p></div>`+catchup+teaser();
-  }
+  const mine=weekTotal(m,w);
+
+  // 4. ta place en une ligne
+  const ids=new Set(L.rows.map(r=>r.uid)); standings("week").forEach(r=>ids.add(r.uid));
+  const list=[...ids].map(uid=>({uid,s:weekTotal(S.players[uid],w).s})).sort((a,b)=>b.s-a.s);
+  const rank=list.findIndex(r=>r.uid===S.uid)+1;
+  const min=list.length?Math.min(...list.map(r=>r.s)):0, losers=list.filter(r=>r.s===min), riskOn=list.length>=2&&losers.length<list.length;
+  const lanterne = riskOn ? losers.map(r=>r.uid===S.uid?"toi":nameOf(r.uid)).join(" et ") : "";
+  const place = list.length>=2
+    ? `<button class="placecard" data-goto="classement"><span class="pl-rank">${rank?rank+(rank===1?"er":"e"):"–"}</span><span class="pl-txt"><b>sur ${list.length} cette semaine</b>${riskOn?`<small>Lanterne rouge : ${esc(lanterne)}</small>`:`<small>Personne n'est encore distancé</small>`}</span><span class="pl-go">Classement ›</span></button>`
+    : `<p class="note center">Invite tes potes pour lancer le classement et le Ricard du dernier !</p>`;
+
+  // 5. bandeau appli/notifs compact (si utile)
+  const app1 = typeof appBanner==="function" ? appBanner() : "";
+
+  return main + catchup
+    + `<div class="card weekcard"><div class="wk-head"><span class="tlabel">Ta semaine</span><span class="wk-total">${mine.s} pts</span></div><div class="days">${chips}</div></div>`
+    + place + app1;
+}
+
+// ── Onglet Classement ──
+function homeClassement(){
+  const L=league();
   let board;
   if(S.board==="general"){
-    board = L.rows.length ? L.rows.map((r,i)=>`<div class="lrow ${r.uid===S.uid?"mine":""}">
-        <div class="lmain"><div class="rk">${i===0?"🏆":i+1}</div><div class="nm">${esc(nameOf(r.uid))}${r.ricard?` <span class="ricard" title="Ricard dus aux autres joueurs">🥃 ${r.ricard}</span>`:""}</div><div class="sc">${r.total}</div></div>
-        <div class="wks">${L.weeks.filter(k=>r.weeks[k]!==undefined||k===S.week.key).map(k=>`<span class="wk ${k===S.week.key?"cur":""} ${r.last.includes(k)?"lastw":""}">${wlabel(k)}${k===S.week.key?" (en cours)":""} · <b>${r.weeks[k]||0}</b>${r.last.includes(k)?" 🥃":""}</span>`).join("")}</div></div>`).join("")
+    board = L.rows.length ? L.rows.map((r,i)=>`<div class="row ${r.uid===S.uid?"mine":""}"><div class="rk">${i+1}</div><div class="nm">${esc(nameOf(r.uid))}${r.ricard?` <span class="ricard">🥃 ${r.ricard}</span>`:""}<small>${Object.keys(r.weeks).length} semaine${Object.keys(r.weeks).length>1?"s":""}</small></div><div class="sc">${r.total}</div></div>`).join("")
       : `<div class="empty">Le classement se remplit dès la première partie.</div>`;
-    if(L.out.length) board+=`<p class="note" style="margin-top:10px">Retiré${L.out.length>1?"s":""} pour inactivité (2 semaines sans jouer) : ${L.out.map(r=>esc(nameOf(r.uid))).join(", ")}. Une partie suffit pour revenir.</p>`;
-  } else if(S.board==="week"){
+    if(L.out.length) board+=`<p class="note" style="margin-top:8px">Retirés (2 semaines sans jouer) : ${L.out.map(r=>esc(nameOf(r.uid))).join(", ")}.</p>`;
+  } else if(S.board==="today"){
+    const list=standings("today");
+    board = list.length ? list.map((r,i)=>`<div class="row ${r.uid===S.uid?"mine":""}"><div class="rk">${i+1}</div><div class="nm">${esc(nameOf(r.uid))}</div><div class="sc">${r.s}</div></div>`).join("")
+      : `<div class="empty">Personne n'a encore joué aujourd'hui.</div>`;
+  } else {
     const ids=new Set(L.rows.map(r=>r.uid)); standings("week").forEach(r=>ids.add(r.uid));
     const list=[...ids].map(uid=>{ const {s,n}=weekTotal(S.players[uid],S.week); return {uid,s,n}; }).sort((a,b)=>b.s-a.s);
-    const min=list.length?Math.min(...list.map(r=>r.s)):0, losers=list.filter(r=>r.s===min), stake=list.length-losers.length;
-    const riskOn = list.length>=2 && stake>0;
+    const min=list.length?Math.min(...list.map(r=>r.s)):0, losers=list.filter(r=>r.s===min), stake=list.length-losers.length, riskOn=list.length>=2&&stake>0;
     board = list.length ? list.map((r,i)=>{ const lost=riskOn&&r.s===min;
-        return `<div class="row ${i===0&&r.s>min?"r1":""} ${r.uid===S.uid?"mine":""} ${lost?"lanterne":""}"><div class="rk">${i===0&&r.s>min?"🏆":lost?"🥃":i+1}</div>
-        <div class="nm">${esc(nameOf(r.uid))}<small>${lost?`Lanterne rouge : doit ${stake} Ricard${stake>1?"s":""} si ça reste comme ça dimanche`:`${r.n} jeu${r.n>1?"x":""} joué${r.n>1?"s":""} sur 7`}</small></div><div class="sc">${r.s}</div></div>`; }).join("")
-      : `<div class="empty">Personne n'a encore joué cette semaine. Ouvre le bal !</div>`;
-    board += `<p class="note" style="margin-top:10px">${list.length<2?"🥃 Il faut au moins 2 joueurs pour qu'un Ricard soit en jeu : invite tes potes !":`🥃 En jeu cette semaine : le dernier dimanche soir (lundi ${OPEN_H}h) paiera un Ricard à chacun des ${list.length-1} autres.`} Un joueur qui ne joue pas compte pour 0.</p>`;
-  } else {
-    const list=standings(S.board);
-    board = list.length ? list.map((r,i)=>`<div class="row ${i===0?"r1":""} ${r.uid===S.uid?"mine":""}"><div class="rk">${i===0?"🏆":i+1}</div><div class="nm">${esc(nameOf(r.uid))}<small>${esc(r.sub)}</small></div><div class="sc">${r.s}</div></div>`).join("")
-      : `<div class="empty">${S.board==="week"?"Personne n'a encore joué cette semaine. Ouvre le bal !":"Personne n'a encore joué aujourd'hui."}</div>`;
+      return `<div class="row ${r.uid===S.uid?"mine":""} ${lost?"lanterne":""}"><div class="rk">${lost?"🥃":i+1}</div><div class="nm">${esc(nameOf(r.uid))}<small>${lost?`doit ${stake} Ricard${stake>1?"s":""} si ça reste comme ça`:`${r.n}/7 jeux`}</small></div><div class="sc">${r.s}</div></div>`; }).join("")
+      : `<div class="empty">Personne n'a encore joué cette semaine.</div>`;
+    if(list.length>=2) board+=`<p class="note" style="margin-top:8px">Dimanche soir, le dernier paie un Ricard à chacun des autres.</p>`;
   }
-  const palm=palmares();
   const owed=L.rows.concat(L.out).filter(r=>r.ricard>0).sort((a,b)=>b.ricard-a.ricard);
-  const ardoise=`<div class="card ardoise"><h2>🥃 L'ardoise des Ricard</h2>${owed.length?owed.map(r=>`<div class="row"><div class="rk">🥃</div><div class="nm">${esc(nameOf(r.uid))}<small>Dernier en ${r.last.map(wlabel).join(", ")}</small></div><div class="sc">${r.ricard}</div></div>`).join("")
-    :`<div class="empty">Personne ne doit de Ricard pour l'instant. Verdict à la fin de la semaine !</div>`}</div>`;
-  app.innerHTML = header()
-  + (S.err?`<div class="warn">${esc(S.err)}</div>`:"")
-  + (S.solo?`<div class="warn">Mode solo : le classement partagé n'est pas disponible ici, tes scores ne seront pas enregistrés.</div>`:"")
-  + top
-  + (typeof appCard==="function"?appCard():"")
-  + lastRecap()
-  + `<div class="card">
-      <div class="me"><div><div class="lbl">${m&&m.pseudo?esc(m.pseudo):"Toi"} ${S.solo?"":`· <a href="#" id="rename" style="color:var(--muted)">modifier</a>`}${typeof showCode==="function"?` · <a href="#" id="mycodeL" style="color:var(--muted)">mon code joueur</a>`:""}</div>
-      <div class="pts">${mine.s} <span style="font-size:18px;color:var(--chalk)">pts cette semaine</span></div>
-      <div class="lbl" style="margin-top:4px">Total : ${myL?myL.total:0} pts${myL&&myL.ricard?` · 🥃 ${myL.ricard} Ricard à payer`:""}</div></div>
-      <div style="text-align:right"><div class="lbl">Général</div><div class="pts" style="color:var(--chalk)">${grank?grank+(grank===1?"er":"e"):"–"}</div></div></div>
-      <div class="days">${chips}</div>
-    </div>
-    <div class="card"><div class="tabs"><button class="tab ${S.board==="week"?"on":""}" data-b="week">Semaine</button><button class="tab ${S.board==="general"?"on":""}" data-b="general">Général</button><button class="tab ${S.board==="today"?"on":""}" data-b="today">Aujourd'hui</button></div>${board}</div>
-    ${ardoise}
-    ${palm.length?`<div class="card palm"><h2>Palmarès</h2>${palm.map(p=>`<div class="row"><div class="rk">🏆</div><div class="nm">${esc(nameOf(p.uid))}<small>Semaine ${parseInt(p.k.split("W")[1],10)} · ${p.k.slice(0,4)}</small></div><div class="sc">${p.s} pts</div></div>`).join("")}</div>`:""}
-    ${S.isOwner||S.solo?`<button class="btn ghost" id="testmode" style="margin-bottom:14px">🧪 Mode test (organisateur)</button>`:""}
-    <div class="card"><h2>Le programme</h2>${SCHEDULE.map((g,i)=>`<div class="prog"><b>${DAYN[i]}</b><span>${GAMES[g].e} ${esc(GAMES[g].n)}</span></div>`).join("")}
-    <p class="note" style="margin-top:10px">Un nouveau jeu chaque matin à ${OPEN_H}h, mêmes défis pour tout le monde, jusqu'à ${MAXPTS} points par jeu. Tu peux rattraper les jours manqués de la semaine en cours.</p>
-    <p class="note" style="margin-top:8px">🏆 Le classement général cumule toutes les semaines. 🥃 Chaque fin de semaine, le dernier doit un Ricard à chacun des autres joueurs (un joueur qui n'a pas joué de la semaine compte pour 0). 🚪 Deux semaines sans jouer et tu es retiré du classement. Une partie suffit pour revenir.</p></div>`;
-  app.querySelectorAll(".day.done").forEach(b=>b.onclick=()=>openResult(b.dataset.d));
-  app.querySelectorAll(".day.open").forEach(b=>b.onclick=()=>{ if(!S.readOnly) openIntro(b.dataset.d); });
-  app.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{ S.board=b.dataset.b; render(); });
-  const p1=document.getElementById("play"); if(p1) p1.onclick=()=>openIntro(p1.dataset.d);
-  app.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>openIntro(b.dataset.c));
-  const st=document.getElementById("seetoday"); if(st) st.onclick=e=>{e.preventDefault(); openResult(S.today);};
-  const rn=document.getElementById("rename"); if(rn) rn.onclick=e=>{e.preventDefault(); S.pseudoDraft=""; S.view="pseudo"; render();};
-  if(typeof bindAppCard==="function") bindAppCard();
-  if(location.hash==="#recap"){ const rc=document.getElementById("recap"); if(rc){ setTimeout(()=>rc.scrollIntoView({behavior:"smooth"}),100); } try{ history.replaceState(null,"",location.pathname); }catch(_){} }
-  const mc=document.getElementById("mycodeL"); if(mc) mc.onclick=e=>{e.preventDefault(); showCode();};
-  const tm=document.getElementById("testmode"); if(tm) tm.onclick=()=>{ S.test=true; testBox={pseudo:"Test",days:{}}; render(); window.scrollTo(0,0); };
+  const palm=palmares();
+  return `<div class="card"><div class="tabs"><button class="tab ${S.board==="week"?"on":""}" data-b="week">Semaine</button><button class="tab ${S.board==="general"?"on":""}" data-b="general">Général</button><button class="tab ${S.board==="today"?"on":""}" data-b="today">Aujourd'hui</button></div>${board}</div>`
+    + lastRecap()
+    + (owed.length?`<div class="card ardoise"><h2>L'ardoise des Ricard</h2>${owed.map(r=>`<div class="row"><div class="rk">🥃</div><div class="nm">${esc(nameOf(r.uid))}<small>dernier en ${r.last.map(wlabel).join(", ")}</small></div><div class="sc">${r.ricard}</div></div>`).join("")}</div>`:"")
+    + (palm.length?`<div class="card palm"><h2>Palmarès</h2>${palm.map(p=>`<div class="row"><div class="rk">🏆</div><div class="nm">${esc(nameOf(p.uid))}<small>semaine ${parseInt(p.k.split("W")[1],10)}</small></div><div class="sc">${p.s}</div></div>`).join("")}</div>`:"");
 }
+
+// ── Onglet Infos : profil, appli, règles ──
+function homeInfos(){
+  const m=me();
+  return `<div class="card"><h2>Mon profil</h2>
+      <div class="inforow"><span>Pseudo</span><b>${esc((m&&m.pseudo)||"—")}</b></div>
+      <div class="row2" style="margin-top:10px">${S.solo?"":`<button class="btn ghost" id="rename">Changer de pseudo</button>`}${typeof showCode==="function"?`<button class="btn ghost" id="mycodeL">Mon code joueur</button>`:""}</div>
+      ${typeof showCode==="function"?`<p class="note">Le code joueur sert à retrouver tes points sur un autre téléphone.</p>`:""}
+    </div>`
+    + (typeof appCard==="function"?appCard(true):"")
+    + `<div class="card"><h2>Le programme</h2>${SCHEDULE.map((g,i)=>`<div class="prog"><b>${DAYN[i]}</b><span>${esc(GAMES[g].n)}</span></div>`).join("")}</div>
+    <div class="card"><h2>Les règles</h2>
+      <p class="note">• Un nouveau jeu chaque matin à ${OPEN_H}h, le même pour tout le monde, jusqu'à ${MAXPTS} pts.</p>
+      <p class="note">• Un seul essai par jeu. Les jours manqués se rattrapent jusqu'au dimanche soir.</p>
+      <p class="note">• Le dernier de la semaine paie un Ricard à chacun des autres. Qui ne joue pas compte pour 0.</p>
+      <p class="note">• Deux semaines sans jouer = retiré du classement (une partie suffit pour revenir).</p>
+    </div>`
+    + (S.isOwner||S.solo?`<button class="btn ghost" id="testmode">Mode test (organisateur)</button>`:"");
+}
+
 // Mode test : tous les jeux de la semaine, jours futurs compris, rejouables, sans enregistrement
 function renderTest(){
   const w=S.week;

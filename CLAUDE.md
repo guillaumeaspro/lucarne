@@ -15,6 +15,13 @@ Appli web d'une seule page pour jouer avec des amis toute la semaine, **sans com
 
 Chaque jeu ouvre à **7h (heure de Paris)** et reste le jeu du jour jusqu'à 7h le lendemain (`todayStr`, `openAt`). Après une partie, un teaser du jeu suivant s'affiche avec un compte à rebours. Un essai par jour ; les jours manqués de la semaine en cours peuvent être rattrapés.
 
+## Navigation (simplifiée)
+Barre en bas avec 3 onglets (`S.tab`) :
+- **Jouer** (`homeJouer`) : le jeu du jour (feuille aimantée ; une fois joué : score + compte à rebours du lendemain), un seul bouton « X jeux à rattraper », la semaine en 7 cases cliquables, une ligne « ta place + lanterne rouge » qui mène au classement, un bandeau d'une ligne pour installer l'appli / activer les notifs seulement s'il manque quelque chose.
+- **Classement** (`homeClassement`) : Semaine / Général / Aujourd'hui, récap de la semaine passée sur le terrain, ardoise des Ricard, palmarès.
+- **Infos** (`homeInfos`) : profil (pseudo, code joueur), appli et notifs, programme, règles, mode test organisateur.
+Principe : une seule chose importante par écran, pas d'information répétée.
+
 ## Classement (`league()`)
 - **Général cumulé**, jamais remis à zéro, avec le détail des points de chaque semaine.
 - **Ricard 🥃** : à la fin de chaque semaine, le(s) dernier(s) doit(vent) un Ricard à chacun des autres participants. Participants d'une semaine = joueurs ayant joué cette semaine-là ou la précédente (un absent compte 0). Égalité générale = personne ne paie.
