@@ -21,6 +21,12 @@ const DAYN = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
 const DAYL = ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
 const MONTHS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
 
+// Bloque le zoom par pincement (Safari iPhone ignore « user-scalable=no ») et le double-tap
+try{
+  ["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+  document.addEventListener("touchmove",e=>{ if(e.touches && e.touches.length>1) e.preventDefault(); },{passive:false});
+}catch(_){}
+
 // ═════════════════════════ OUTILS ═════════════════════════
 function parisParts(d=new Date()){ const o={}; new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(d).forEach(p=>o[p.type]=p.value); return o; }
 function offsetMs(d){ const o=parisParts(d); return Date.UTC(+o.year,+o.month-1,+o.day,+o.hour%24,+o.minute,+o.second)-Math.floor(d.getTime()/1000)*1000; }
