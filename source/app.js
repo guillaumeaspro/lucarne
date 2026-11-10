@@ -216,8 +216,31 @@ function legacyQuizItems(date){ // ancien format (tirage par jour de semaine)
   const w=weekOf(date), order=shuffle(Q.map((_,i)=>i), rng("lucarne-"+w.key));
   return order.slice(w.dow*10,w.dow*10+10).map(i=>{ const [cat,q,...o]=Q[i]; return {cat,q,opts:shuffle(o.map((t,k)=>({t,ok:k===0})), rng(date+"#"+i))}; });
 }
+// Imposteur : on répartit les manches en semaines de 5 sans qu'aucun joueur n'apparaisse deux fois dans la même semaine
+let IMP_WEEKS=null;
+function imposteurWeeks(){
+  if(IMP_WEEKS) return IMP_WEEKS;
+  const names=r=>[r[1],...r[2]];
+  for(let attempt=0; attempt<500; attempt++){
+    const pool=shuffle(IMPOSTEUR.slice(), rng("imp-pack-"+attempt)), weeks=[];
+    let ok=true;
+    while(pool.length){
+      const wk=[], used=new Set();
+      for(let i=0;i<pool.length && wk.length<5;){
+        const r=pool[i];
+        if(names(r).some(n=>used.has(n))){ i++; continue; }
+        names(r).forEach(n=>used.add(n)); wk.push(r); pool.splice(i,1);
+      }
+      if(wk.length<5){ ok=false; break; }
+      weeks.push(wk);
+    }
+    if(ok) return IMP_WEEKS=weeks;
+  }
+  return IMP_WEEKS=[...Array(Math.floor(IMPOSTEUR.length/5))].map((_,k)=>IMPOSTEUR.slice(k*5,k*5+5));
+}
 function imposteurItems(date){
-  return weekSlice(IMPOSTEUR,date,5,"imp").map((r,i)=>{ const [club,imp,ok]=r;
+  const W=imposteurWeeks(), k=((weekOf(date).idx % W.length)+W.length)%W.length;
+  return W[k].map((r,i)=>{ const [club,imp,ok]=r;
     return {club, cat:"Imposteur", q:`Lequel de ces joueurs n'a JAMAIS joué à ${club} ?`, opts:shuffle([{t:imp,ok:true},...ok.map(t=>({t,ok:false}))], rng(date+"imp"+i))}; });
 }
 // Parcours : 3 joueurs connus + 2 pour les aguerris → [{a:"nom|alias", nat, clubs[], expert}]
@@ -256,11 +279,25 @@ const MYSTERE_ALL = (()=>{ const ex=new Set(MYSTERE_EXCLUS), done=new Set(MYSTER
 const mystereTarget = date => weekSlice(MYSTERE_ALL,date,1,"mys")[0];
 const topItem = date => weekSlice(TOPS,date,1,"top")[0];
 const onzeItem = date => weekSlice(ONZES,date,1,"onze")[0];
-function pmRound(date,i){
-  const r=rng(date+"pm"+i), cat=PM[Math.floor(r()*PM.length)];
-  let a,b,guard=0; do{ a=cat.items[Math.floor(r()*cat.items.length)]; b=cat.items[Math.floor(r()*cat.items.length)]; }while((a[1]===b[1]||a[0]===b[0]) && ++guard<50);
-  return {q:cat.q, unit:cat.unit, pre:cat.pre||"", low:!!cat.low, a, b};
+// Plus ou moins : 15 duels par jour, sans qu'un même joueur ou club revienne deux fois le même jour
+const PM_CACHE={};
+function pmRounds(date){
+  if(PM_CACHE[date]) return PM_CACHE[date];
+  const r=rng(date+"pm"), used=new Set(), out=[];
+  for(let i=0;i<15;i++){
+    let R=null;
+    for(let guard=0; guard<200 && !R; guard++){
+      const cat=PM[Math.floor(r()*PM.length)];
+      const a=cat.items[Math.floor(r()*cat.items.length)], b=cat.items[Math.floor(r()*cat.items.length)];
+      if(a[0]===b[0]||a[1]===b[1]||used.has(a[0])||used.has(b[0])) continue;
+      R={q:cat.q, unit:cat.unit, pre:cat.pre||"", low:!!cat.low, a, b};
+    }
+    if(!R){ const cat=PM[0]; R={q:cat.q,unit:cat.unit,pre:"",low:false,a:cat.items[0],b:cat.items[1]}; }
+    used.add(R.a[0]); used.add(R.b[0]); out.push(R);
+  }
+  return PM_CACHE[date]=out;
 }
+function pmRound(date,i){ return pmRounds(date)[i]; }
 
 // ═════════════════════════ RENDU GÉNÉRAL ═════════════════════════
 const app=document.getElementById("app");
