@@ -36,6 +36,7 @@ function openAt(date){ const wall=parse(date).getTime()+OPEN_H*3600e3; let t=wal
 const nextDate = d => fmt(new Date(parse(d).getTime()+864e5));
 function cdText(ms){ if(ms<=0) return "C'est ouvert !"; const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60;
   return `${h} h ${String(m).padStart(2,"0")} min ${String(x).padStart(2,"0")} s`; }
+function cdShort(ms){ if(ms<=0) return "C'est ouvert !"; const s=Math.floor(ms/1000); return [Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(n=>String(n).padStart(2,"0")).join(":"); }
 function teaser(){
   const nd=nextDate(S.today), g=GAMES[gameFor(nd)], t=openAt(nd);
   return `<div class="card teaser"><div class="tlabel">Prochain match · ${DAYL[weekOf(nd).dow]} ${OPEN_H}h</div>
@@ -269,9 +270,7 @@ function render(){
   ({loading:renderLoading, pseudo:renderPseudo, home:renderHome, intro:renderIntro, play:renderPlay, result:renderResult})[S.view]();
 }
 function header(){
-  const w=S.week;
-  return `<header class="top"><div><h1 class="logo">Lucar<span>ne</span></h1><div class="sub">Le jeu foot de la semaine</div></div>
-  <div class="sub" style="text-align:right">Semaine ${w.num}<br>${nice(w.days[0])} – ${nice(w.days[6])}</div></header>`;
+  return `<header class="top"><h1 class="logo">Lucarne</h1><span class="sub">Semaine ${S.week.num}</span></header>`;
 }
 function renderLoading(){
   app.innerHTML = header()+`<div class="card center"><div class="display" style="font-size:22px">Échauffement…</div>
@@ -296,7 +295,8 @@ const ICON = {
 };
 function navBar(){
   const t=S.tab||"jouer";
-  const b=(id,label)=>`<button class="navb ${t===id?"on":""}" data-tab="${id}" aria-current="${t===id?"page":"false"}">${ICON[id]}<span>${label}</span></button>`;
+  const alert = typeof appBanner==="function" && !!appBanner();
+  const b=(id,label)=>`<button class="navb ${t===id?"on":""}" data-tab="${id}" aria-current="${t===id?"page":"false"}">${ICON[id]}<span>${label}</span>${id==="infos"&&alert?`<i class="navdot" aria-label="à régler"></i>`:""}</button>`;
   return `<nav class="bottomnav">${b("jouer","Jouer")}${b("classement","Classement")}${b("infos","Infos")}</nav>`;
 }
 
@@ -321,61 +321,48 @@ function renderHome(){
 
 // ── Onglet Jouer : le jeu du jour, ta semaine, ta place ──
 function homeJouer(){
-  const m=me(), w=S.week, L=league();
+  const m=me(), w=S.week;
   const tg=GAMES[gameFor(S.today)], te=bestFor(m,S.today), todayDone=te&&te.done;
   const missed=w.days.filter(d=>d<S.today && !(bestFor(m,d)&&bestFor(m,d).done));
 
-  // 1. le jeu du jour (ou le prochain si déjà joué)
+  // 1. Le jeu du jour : la seule grosse chose de l'écran
   let main;
   if(!todayDone){
-    main=`<div class="card today-card">
-      <div class="tlabel">Aujourd'hui · ${DAYL[weekOf(S.today).dow]}</div>
+    main=`<div class="card today-card hero">
+      <div class="tlabel">Aujourd'hui</div>
       <div class="tname display">${esc(tg.n)}</div>
-      <p class="note">${esc(tg.d)}</p>
-      ${S.readOnly?`<button class="btn" disabled>Lecture seule</button>`:`<button class="btn" data-play="${S.today}">Jouer</button>`}
+      ${S.readOnly?`<button class="btn" disabled>Lecture seule</button>`:`<button class="btn big" data-play="${S.today}">Jouer</button>`}
     </div>`;
   } else {
     const nd=nextDate(S.today), ng=GAMES[gameFor(nd)];
-    main=`<div class="card today-card done">
+    main=`<div class="card today-card hero">
       <div class="tlabel">Aujourd'hui · ${esc(tg.n)}</div>
-      <div class="doneline"><span class="display">C'est joué !</span><span class="bigscore">${te.score}<small> pts</small></span></div>
+      <div class="bigscore">${te.score}<small> pts</small></div>
       <a href="#" class="seelink" data-see="${S.today}">Revoir ma partie</a>
-      <div class="nextline"><span>Demain ${OPEN_H}h · <b>${esc(ng.n)}</b></span><span class="cd" data-t="${openAt(nd)}">${cdText(openAt(nd)-Date.now())}</span></div>
+      <div class="nextline"><span>Prochain jeu : <b>${esc(ng.n)}</b></span><span class="cd" data-short="1" data-t="${openAt(nd)}">${cdShort(openAt(nd)-Date.now())}</span></div>
     </div>`;
   }
 
-  // 2. jours à rattraper (seulement s'il y en a)
-  const catchup = missed.length && !S.readOnly ? `<button class="appbanner catchbtn" data-play="${missed[0]}"><span><b class="cnum">${missed.length}</b> jeu${missed.length>1?"x":""} à rattraper · ${esc(GAMES[gameFor(missed[0])].n)} (${DAYL[weekOf(missed[0]).dow]})</span><b>Jouer ›</b></button>` : "";
+  // 2. Rattrapage : un simple lien, seulement s'il y a des jours manqués
+  const catchup = missed.length && !S.readOnly
+    ? `<button class="linkbtn" data-play="${missed[0]}">${missed.length} jeu${missed.length>1?"x":""} à rattraper ›</button>` : "";
 
-  // 3. ta semaine en 7 cases
-  const chips=w.days.map((d,i)=>{
-    const e=bestFor(m,d), isToday=d===S.today, future=d>S.today;
-    let cls="day", s="";
-    if(e&&e.done){ cls+=" done"; s=e.score; }
-    else if(future){ cls+=" locked"; s="—"; }
-    else { cls+=" open"; s="à jouer"; }
-    if(isToday) cls+=" today";
-    const attr = e&&e.done ? `data-see="${d}"` : (!future ? `data-play="${d}"` : "disabled");
-    return `<button class="${cls}" ${attr} aria-label="${DAYL[i]} : ${esc(GAMES[gameFor(d)].n)}">${DAYN[i]}<span class="s">${s}</span></button>`;
-  }).join("");
-  const mine=weekTotal(m,w);
-
-  // 4. ta place en une ligne
-  const ids=new Set(L.rows.map(r=>r.uid)); standings("week").forEach(r=>ids.add(r.uid));
+  // 3. Ta semaine en une ligne : 7 pastilles + total + rang
+  const ids=new Set(league().rows.map(r=>r.uid)); standings("week").forEach(r=>ids.add(r.uid));
   const list=[...ids].map(uid=>({uid,s:weekTotal(S.players[uid],w).s})).sort((a,b)=>b.s-a.s);
   const rank=list.findIndex(r=>r.uid===S.uid)+1;
-  const min=list.length?Math.min(...list.map(r=>r.s)):0, losers=list.filter(r=>r.s===min), riskOn=list.length>=2&&losers.length<list.length;
-  const lanterne = riskOn ? losers.map(r=>r.uid===S.uid?"toi":nameOf(r.uid)).join(" et ") : "";
-  const place = list.length>=2
-    ? `<button class="placecard" data-goto="classement"><span class="pl-rank">${rank?rank+(rank===1?"er":"e"):"–"}</span><span class="pl-txt"><b>sur ${list.length} cette semaine</b>${riskOn?`<small>Lanterne rouge : ${esc(lanterne)}</small>`:`<small>Personne n'est encore distancé</small>`}</span><span class="pl-go">Classement ›</span></button>`
-    : `<p class="note center">Invite tes potes pour lancer le classement et le Ricard du dernier !</p>`;
+  const dots=w.days.map((d,i)=>{
+    const e=bestFor(m,d), future=d>S.today;
+    const st = e&&e.done ? "done" : future ? "locked" : "open";
+    const attr = st==="done" ? `data-see="${d}"` : st==="open" ? `data-play="${d}"` : "disabled";
+    return `<button class="wdot ${st} ${d===S.today?"today":""}" ${attr} aria-label="${DAYL[i]} : ${esc(GAMES[gameFor(d)].n)}${st==="done"?" ("+e.score+" pts)":""}">${"LMMJVSD"[i]}</button>`;
+  }).join("");
+  const summary = `<div class="weekline">
+      <div class="wdots">${dots}</div>
+      <button class="wsum" data-goto="classement"><b>${weekTotal(m,w).s} pts</b><span>${list.length>=2&&rank?rank+(rank===1?"er":"e")+" sur "+list.length:"cette semaine"} ›</span></button>
+    </div>`;
 
-  // 5. bandeau appli/notifs compact (si utile)
-  const app1 = typeof appBanner==="function" ? appBanner() : "";
-
-  return main + catchup
-    + `<div class="card weekcard"><div class="wk-head"><span class="tlabel">Ta semaine</span><span class="wk-total">${mine.s} pts</span></div><div class="days">${chips}</div></div>`
-    + place + app1;
+  return main + catchup + summary;
 }
 
 // ── Onglet Classement ──

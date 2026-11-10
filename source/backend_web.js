@@ -163,7 +163,7 @@ async function init(){
   const saved=lsGet(LS_ME); if(saved) S.players[S.uid]=saved;
   render();
   setInterval(()=>{
-    document.querySelectorAll(".cd").forEach(el=>{ el.textContent=cdText(+el.dataset.t-Date.now()); });
+    document.querySelectorAll(".cd").forEach(el=>{ el.textContent=(el.dataset.short?cdShort:cdText)(+el.dataset.t-Date.now()); });
     const t=todayStr(); if(t!==S.today){ S.today=t; if(!S.test){ S.week=weekOf(t); if(S.view==="home"||S.view==="result") render(); } }
   }, 1000);
   const slow=setTimeout(()=>{ S.slow=true; if(S.view==="loading") render(); },10000);

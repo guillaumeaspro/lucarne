@@ -17,7 +17,7 @@ Chaque jeu ouvre à **7h (heure de Paris)** et reste le jeu du jour jusqu'à 7h 
 
 ## Navigation (simplifiée)
 Barre en bas avec 3 onglets (`S.tab`) :
-- **Jouer** (`homeJouer`) : le jeu du jour (feuille aimantée ; une fois joué : score + compte à rebours du lendemain), un seul bouton « X jeux à rattraper », la semaine en 7 cases cliquables, une ligne « ta place + lanterne rouge » qui mène au classement, un bandeau d'une ligne pour installer l'appli / activer les notifs seulement s'il manque quelque chose.
+- **Jouer** (`homeJouer`) : volontairement épuré. Une seule grosse carte (feuille aimantée) avec le jeu du jour et « Jouer » ; une fois joué : score, « Revoir ma partie », prochain jeu + compte à rebours hh:mm:ss. Dessous : un lien « X jeux à rattraper › » s'il y en a, puis une ligne avec 7 pastilles (L M M J V S D, cliquables) + total de la semaine + rang (mène au classement). Rien d'autre : l'install/notifs est dans Infos (pastille rouge sur l'onglet s'il manque quelque chose).
 - **Classement** (`homeClassement`) : Semaine / Général / Aujourd'hui, récap de la semaine passée sur le terrain, ardoise des Ricard, palmarès.
 - **Infos** (`homeInfos`) : profil (pseudo, code joueur), appli et notifs, programme, règles, mode test organisateur.
 Principe : une seule chose importante par écran, pas d'information répétée.

@@ -29,7 +29,7 @@ function afterLoad(){
 async function init(){
   render();
   setInterval(()=>{
-    document.querySelectorAll(".cd").forEach(el=>{ el.textContent=cdText(+el.dataset.t-Date.now()); });
+    document.querySelectorAll(".cd").forEach(el=>{ el.textContent=(el.dataset.short?cdShort:cdText)(+el.dataset.t-Date.now()); });
     const t=todayStr(); if(t!==S.today){ S.today=t; if(!S.test){ S.week=weekOf(t); if(S.view==="home"||S.view==="result") render(); } }
   }, 1000);
   const C=window.claude;
