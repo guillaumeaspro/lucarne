@@ -460,6 +460,9 @@ header.top .sub{font-size:14px}
 @media (max-width:360px){.wdot{width:26px;height:26px;font-size:11px}.wdots{gap:4px}}
 .today-card.hero .nextline{flex-direction:column;gap:8px}
 .today-card.hero .nextline .cd{font-size:26px;padding:6px 14px;letter-spacing:.04em}
+/* bouton retour */
+.backbtn{display:inline-flex;align-items:center;gap:4px;background:transparent;border:0;color:var(--chalk);font:700 15px Inter,sans-serif;padding:10px 12px 10px 4px;margin:0 0 6px -4px;min-height:44px;cursor:pointer}
+.backbtn:active{opacity:.6}
 </style>
 </head>
 <body>
@@ -1608,21 +1611,22 @@ function renderTest(){
   document.getElementById("pvw").onclick=()=>showFullWeek(S.week);
   document.getElementById("quit").onclick=()=>{ S.test=false; S.week=weekOf(S.today); S.view="home"; render(); window.scrollTo(0,0); };
 }
-function openResult(date){ S.recapKey=date; S.view="result"; render(); window.scrollTo(0,0); }
+function openResult(date){ if(S.view==="home") pushScreen(); S.recapKey=date; S.view="result"; render(); window.scrollTo(0,0); }
 function openIntro(date){
   if(date>S.today && !S.test) return;
+  if(S.view==="home") pushScreen();
   const e=bestFor(me(),date); if(e&&e.done) return openResult(date);
   if(entryFor(me(),date)) return startGame(date); // partie en cours : on reprend directement
   S.introDate=date; S.view="intro"; render(); window.scrollTo(0,0);
 }
 function renderIntro(){
   const d=S.introDate, g=GAMES[gameFor(d)];
-  app.innerHTML = header()+`<div class="card center"><div style="font-size:56px">${g.e}</div><div class="display" style="font-size:34px">${esc(g.n)}</div>
+  app.innerHTML = backBar()+`<div class="card center"><div style="font-size:56px">${g.e}</div><div class="display" style="font-size:34px">${esc(g.n)}</div>
   <div class="sub" style="margin:4px 0 14px">${d===S.today?"Défi du jour":"Défi de "+DAYL[weekOf(d).dow]+" "+nice(d)}</div>
   <p style="font-size:16px;line-height:1.45;margin-bottom:10px">${esc(g.d)}</p><p class="note" style="margin-bottom:18px">${esc(g.r)}</p>
-  <button class="btn" id="go">Coup d'envoi</button><div class="gap"></div><button class="btn ghost" id="back">Retour</button></div>`;
+  <button class="btn" id="go">Coup d'envoi</button><div class="gap"></div><button class="btn ghost" data-back="1">Retour</button></div>`;
   document.getElementById("go").onclick=()=>startGame(d);
-  document.getElementById("back").onclick=()=>{S.view="home";render();};
+
 }
 
 // ═════════════════════════ MOTEUR DE PARTIE ═════════════════════════
@@ -1660,9 +1664,21 @@ function showFullWeek(wk){
   ov.querySelector("#mclose").onclick=()=>ov.remove();
 }
 function renderPlay(){ G[S.play.game].render(); }
+// Retour à l'accueil depuis n'importe quel écran (bouton en haut + bouton retour du téléphone)
+const backBar = (label="Retour") => `<button class="backbtn" data-back="1" aria-label="Retour à l'accueil"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>${label}</button>`;
+function goHome(){
+  if(S.view==="home") return;
+  if(S.view==="play" && S.play) save();
+  S.play=null; S.view="home"; render(); window.scrollTo(0,0);
+}
+const canHistory = /vercel\.app$/.test(location.hostname);
+function pushScreen(){ if(canHistory){ try{ history.pushState({lucarne:1},"",location.pathname); }catch(_){} } }
+if(canHistory) window.addEventListener("popstate",()=>{ if(S.view!=="home"&&S.view!=="loading"&&S.view!=="pseudo") goHome(); });
+document.addEventListener("click",e=>{ const b=e.target.closest&&e.target.closest("[data-back]"); if(b){ e.preventDefault(); if(canHistory && history.state && history.state.lucarne) history.back(); else goHome(); } });
+
 function playHead(extra=""){
   const z=S.play, g=GAMES[z.game];
-  return `<div class="qhead"><span>${g.e} ${esc(g.n)}${extra?" · "+extra:""}</span><span class="score">${z.e.score||0}</span></div>`;
+  return backBar("Accueil")+`<div class="qhead"><span>${g.e} ${esc(g.n)}${extra?" · "+extra:""}</span><span class="score">${z.e.score||0}</span></div>`;
 }
 function renderResult(){
   const date=S.recapKey, m=me(), e=bestFor(m,date);
@@ -1673,15 +1689,14 @@ function renderResult(){
   const ratio=e.score/MAXPTS;
   const comment = ratio>=.85?"Ballon d'or !":ratio>=.65?"Titulaire indiscutable.":ratio>=.45?"Correct, mais le coach attend mieux.":ratio>=.2?"Retour au centre de formation…":"Carton rouge.";
   const body = e.game ? G[game].recap(date,e) : G.quiz.recap(date,{st:{answers:e.answers}},true);
-  app.innerHTML = header()+`<div class="card center">
+  app.innerHTML = backBar()+`<div class="card center">
     <div class="sub">${g.e} ${esc(g.n)} · ${date===S.today?"aujourd'hui":DAYL[weekOf(date).dow]+" "+nice(date)}</div>
     <div class="big">${e.score}</div><div class="display" style="font-size:22px;margin-top:6px">${comment}</div>
     ${!S.solo&&r?`<p class="note" style="margin-top:8px">${r}${r===1?"er":"e"} sur ${dayRows.length} joueur${dayRows.length>1?"s":""} ce jour-là</p>`:""}
-    <div class="gap"></div><button class="btn" id="back">Voir le classement</button></div>
+    <div class="gap"></div><button class="btn" data-back="1">Retour à l'accueil</button></div>
     ${teaser()}
     <div class="card recap"><h2>Correction</h2>${body}</div>`;
-  document.getElementById("back").onclick=()=>{ S.view="home"; render(); window.scrollTo(0,0); };
-  if(S.test) document.getElementById("back").textContent="Retour au mode test";
+  if(S.test){ const bb=app.querySelector(".btn[data-back]"); if(bb) bb.textContent="Retour au mode test"; }
 }
 
 // Champ texte avec suggestions

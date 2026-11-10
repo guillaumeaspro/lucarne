@@ -445,3 +445,6 @@ header.top .sub{font-size:14px}
 @media (max-width:360px){.wdot{width:26px;height:26px;font-size:11px}.wdots{gap:4px}}
 .today-card.hero .nextline{flex-direction:column;gap:8px}
 .today-card.hero .nextline .cd{font-size:26px;padding:6px 14px;letter-spacing:.04em}
+/* bouton retour */
+.backbtn{display:inline-flex;align-items:center;gap:4px;background:transparent;border:0;color:var(--chalk);font:700 15px Inter,sans-serif;padding:10px 12px 10px 4px;margin:0 0 6px -4px;min-height:44px;cursor:pointer}
+.backbtn:active{opacity:.6}
