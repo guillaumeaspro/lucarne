@@ -1243,10 +1243,18 @@ function lev(a,b){ if(Math.abs(a.length-b.length)>2) return 9; const d=[...Array
 const aliases = a => a.split("|").map(norm);
 const display = a => a.split("|")[0];
 // Trouve l'élément qui correspond à une saisie libre : d'abord exact, puis à une faute près
+// Trouve l'élément qui correspond à une saisie libre :
+// exact, puis dans n'importe quel ordre (« Heung-min Son » = « Son Heung-min »), puis à une faute près
+const sortedKey = s => norm(s).split(" ").filter(Boolean).sort().join(" ");
 function matchItem(input, list){
   const q=norm(input); if(!q) return -1;
+  const qs=sortedKey(input);
   for(let i=0;i<list.length;i++) if(aliases(list[i]).includes(q)) return i;
-  for(let i=0;i<list.length;i++) for(const a of aliases(list[i])){ const tol=a.length>=8?2:a.length>=5?1:0; if(tol && lev(q,a)<=tol) return i; }
+  for(let i=0;i<list.length;i++) for(const a of list[i].split("|")) if(sortedKey(a)===qs) return i;
+  for(let i=0;i<list.length;i++) for(const raw of list[i].split("|")){
+    const a=norm(raw), as=sortedKey(raw), tol=a.length>=8?2:a.length>=5?1:0;
+    if(tol && (lev(q,a)<=tol || lev(qs,as)<=tol)) return i;
+  }
   return -1;
 }
 const PL = {}; P.forEach(([n,nat,pos,born,clubs])=>PL[n]={n,nat,pos,born,clubs:clubs.split(";")});
@@ -1442,6 +1450,8 @@ function autoMystere(p){
   if(clues.length<5){ const ln=norm(words.length>1?words.slice(1).join(""):p.n).replace(/ /g,"").length; clues.push(`Nombre de lettres de son nom : ${ln}`); }
   clues.push(`Ses initiales : ${initials}`);
   const al=[p.n]; if(words.length>1){ al.push(words.slice(1).join(" ")); al.push(words[words.length-1]); }
+  // noms où le nom de famille vient en premier (ex. Son Heung-min) : on accepte aussi le premier mot
+  if(["Son Heung-min"].includes(p.n)) al.push(words[0]);
   return {a:[...new Set(al)].join("|"), nat:p.nat, pos:p.pos, born:`en ${p.born}`, clues:clues.slice(0,6), auto:true};
 }
 // Années 90 : uniquement les méga-stars (Ballon d'or) ; sinon années 2000 et joueurs actuels
