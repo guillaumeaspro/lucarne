@@ -1,5 +1,5 @@
 // API des scores : GET = toutes les fiches joueurs, POST = enregistrer sa propre fiche.
-import { readState, writeState, hash, readPrivate, writePrivate, sendAll, gameDay, weekOf, weekResults, recapText, SITE } from "./_lib.js";
+import { EPOCH, readState, writeState, hash, readPrivate, writePrivate, sendAll, gameDay, weekOf, weekResults, recapText, SITE } from "./_lib.js";
 
 const MAX_BYTES = 150_000;
 const ID_RE = /^[a-z0-9]{8,40}$/, SECRET_RE = /^[a-z0-9]{16,64}$/;
@@ -34,11 +34,13 @@ export default async function handler(req, res) {
       const players = {};
       for (const [id, p] of Object.entries(s.players)) { const { h, ...pub } = p; players[id] = pub; }
       res.setHeader("Cache-Control", "s-maxage=10, stale-while-revalidate=30");
-      return res.status(200).json({ players });
+      return res.status(200).json({ epoch: EPOCH, players });
     }
     if (req.method === "POST") {
       const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
-      const { id, secret, doc, check } = body;
+      const { id, secret, doc, check, epoch } = body;
+      // un téléphone resté sur l'ancienne saison ne doit pas faire revenir ses vieux scores
+      if (!check && epoch !== EPOCH) return res.status(409).json({ error: "saison terminée", epoch: EPOCH });
       if (!ID_RE.test(id || "") || !SECRET_RE.test(secret || "")) return res.status(400).json({ error: "identifiant invalide" });
       const s = await readState();
       const existing = s.players[id];

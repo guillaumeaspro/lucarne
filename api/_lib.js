@@ -4,6 +4,8 @@ import crypto from "node:crypto";
 import webpush from "web-push";
 
 export const STATE_PATH = "lucarne/state.json";
+// « Saison » en cours : changer cette valeur remet tous les joueurs et scores à zéro (serveur + téléphones)
+export const EPOCH = "2026-11-11";
 const PRIVATE_PREFIX = "lucarne/private/";
 export const SITE = "https://lucarne-three.vercel.app";
 
@@ -17,12 +19,14 @@ export function blobUrl() {
 }
 export async function readState() {
   const r = await fetch(blobUrl() + "?v=" + Date.now(), { cache: "no-store" });
-  if (r.status === 404 || r.status === 403) return { players: {} };
+  if (r.status === 404 || r.status === 403) return { epoch: EPOCH, players: {} };
   if (!r.ok) throw new Error("Lecture impossible " + r.status);
   const s = await r.json();
-  return s && s.players ? s : { players: {} };
+  if (!s || !s.players || s.epoch !== EPOCH) return { epoch: EPOCH, players: {} };
+  return s;
 }
 export async function writeState(s) {
+  s.epoch = EPOCH;
   await put(STATE_PATH, JSON.stringify(s), {
     access: "public", addRandomSuffix: false, allowOverwrite: true,
     contentType: "application/json", cacheControlMaxAge: 60,

@@ -45,6 +45,7 @@ Principe : une seule chose importante par écran, pas d'information répétée.
 - Côté joueur : identifiant + secret dans le navigateur (`localStorage`), sa fiche locale fait foi et se renvoie toute seule si le serveur est en retard. On n'envoie au serveur que les parties terminées et le pseudo (économise les opérations Blob du plan gratuit).
 - « Mon code joueur » permet de récupérer son profil sur un autre appareil.
 - Mode test organisateur : ouvrir une fois le site avec `#orga` à la fin du lien.
+- Remise à zéro : `EPOCH` dans `api/_lib.js`. Changer sa valeur efface tous les joueurs et scores (le serveur ignore l'ancien fichier, refuse en 409 les envois de l'ancienne saison, et chaque téléphone efface sa fiche locale puis redemande un pseudo). Dernière remise à zéro : 2026-11-11, avant l'ouverture à de nouveaux joueurs.
 - Pas de compte : n'importe qui ayant le lien peut jouer sous le pseudo de son choix.
 
 

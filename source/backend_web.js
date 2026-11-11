@@ -1,7 +1,7 @@
 // ═════ Stockage : site autonome (Vercel) — API /api/state + copie locale ═════
 // Chaque joueur a un identifiant et un code secret gardés dans son navigateur.
 // Sa propre fiche fait foi en local ; le serveur rassemble les fiches de tout le monde pour le classement.
-const LS_ME="lucarne-me", LS_ID="lucarne-id";
+const LS_ME="lucarne-me", LS_ID="lucarne-id", LS_EPOCH="lucarne-epoch";
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(_){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){} }
 function newToken(n){ const a=new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(b=>b.toString(36).padStart(2,"0")).join("").slice(0,n*2); }
@@ -33,7 +33,8 @@ async function pushMe(){
   const d=myDoc(); if(!d.pseudo) return;
   for(let attempt=0; attempt<3; attempt++){
     try{
-      const r=await fetch("/api/state",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:S.uid,secret:ident.secret,doc:publicDoc(d)})});
+      const r=await fetch("/api/state",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:S.uid,secret:ident.secret,doc:publicDoc(d),epoch:lsGet(LS_EPOCH)})});
+      if(r.status===409){ await pull(); if(S.view==="home"||S.view==="loading") { S.view="loading"; afterLoad(); } return; }
       if(r.status===403){ S.err="Ce code joueur est déjà utilisé par quelqu'un d'autre."; break; }
       if(!r.ok) throw new Error(r.status);
       if(S.err&&S.err.startsWith("Impossible")){ S.err=""; if(S.view==="home") render(); }
@@ -47,6 +48,12 @@ async function pull(){
   const r=await fetch("/api/state?t="+Math.floor(Date.now()/10000),{cache:"no-store"});
   if(!r.ok) throw new Error(r.status);
   const data=await r.json(), players=data.players||{};
+  // remise à zéro : si la saison a changé, on efface la fiche gardée dans ce téléphone
+  if(data.epoch && lsGet(LS_EPOCH)!==data.epoch){
+    const had=!!lsGet(LS_EPOCH);
+    lsSet(LS_EPOCH,data.epoch);
+    if(had || S.players[S.uid]){ try{ localStorage.removeItem(LS_ME); }catch(_){} S.players={}; if(S.view!=="loading"){ S.view="loading"; } }
+  }
   const mine=myDoc(), server=players[S.uid];
   // ma fiche locale fait foi ; si le serveur est en retard (ou m'a perdu), on renvoie
   players[S.uid]=mine;
